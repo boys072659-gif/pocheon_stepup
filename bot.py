@@ -182,13 +182,61 @@ def make_miniapp_keyboard():
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     kb = make_miniapp_keyboard()
     await update.message.reply_text(
-        "💙 <b>특전대 일일보고 봇</b>\n\n"
-        "/register — 구성원 등록 (최초 1회)\n"
-        "/report — 일일보고 제출\n"
-        "/help — 명령어 안내\n\n"
-        "<b>관리자 전용</b>\n"
-        "/summary — 오늘 보고 취합\n"
-        "/missing — 미보고 인원 확인",
+        "💙 <b>특전대 일일보고 봇 사용법</b>\n\n"
+
+        "━━━━━━━━━━━━━━━━━\n"
+        "📌 <b>구성원 명령어</b>\n"
+        "━━━━━━━━━━━━━━━━━\n"
+        "/register — 최초 1회 구성원 등록\n"
+        "/form — 보고 입력 창 열기 (Mini App)\n"
+        "/report — 텍스트로 직접 보고\n"
+        "/help — 이 도움말\n\n"
+
+        "━━━━━━━━━━━━━━━━━\n"
+        "📋 <b>보고 양식 (/report 사용 시)</b>\n"
+        "━━━━━━━━━━━━━━━━━\n"
+        "<code>/report\n"
+        "전도활동: 강남역 노방전도\n"
+        "발굴인도: 2건 (김철수, 이영희)\n"
+        "찾기인도: 0건\n"
+        "합자: 0건\n"
+        "섭외인도: 0건\n"
+        "섭외교사: 0건\n"
+        "복음방인도: 0건\n"
+        "복음방교사: 0건</code>\n\n"
+
+        "━━━━━━━━━━━━━━━━━\n"
+        "⚙️ <b>관리자 전용</b>\n"
+        "━━━━━━━━━━━━━━━━━\n"
+        "/summary — 오늘 전체 보고 취합\n"
+        "/missing — 미보고 인원 확인\n\n"
+
+        "💡 <b>Tip.</b> /form 버튼으로 언제든지 보고할 수 있습니다!",
+        parse_mode="HTML", reply_markup=kb
+    )
+
+# ── /form - 미니앱 버튼만 단독 전송 ──────────────────────
+async def cmd_form(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    kb = make_miniapp_keyboard()
+    if not kb:
+        await update.message.reply_text(
+            "⚠️ Mini App URL이 설정되지 않았습니다.\n/report 명령어로 직접 보고해주세요.",
+            parse_mode="HTML"
+        )
+        return
+    now = datetime.now(KST)
+    if now.hour >= 21:
+        await update.message.reply_text(
+            "⏰ <b>보고 마감(오후 9시)이 지났습니다.</b>\n내일 보고란에 올려주세요.",
+            parse_mode="HTML"
+        )
+        return
+    user = update.effective_user
+    name = (user.last_name or "") + (user.first_name or user.username or "이름없음")
+    today = now.strftime("%Y년 %m월 %d일")
+    await update.message.reply_text(
+        f"📋 <b>{today} 일일보고</b>\n\n"
+        f"{name}님, 아래 버튼을 눌러 보고를 작성해주세요 💙",
         parse_mode="HTML", reply_markup=kb
     )
 
@@ -333,6 +381,7 @@ def main():
     app.add_handler(CommandHandler("start",    cmd_help))
     app.add_handler(CommandHandler("help",     cmd_help))
     app.add_handler(CommandHandler("register", cmd_register))
+    app.add_handler(CommandHandler("form",     cmd_form))
     app.add_handler(CommandHandler("report",   cmd_report))
     app.add_handler(CommandHandler("summary",  cmd_summary))
     app.add_handler(CommandHandler("missing",  cmd_unreported))
