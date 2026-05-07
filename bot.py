@@ -37,7 +37,7 @@ def today_str() -> str:
 # ── 보고 파싱 ─────────────────────────────────────────────
 def parse_report(text: str) -> dict | None:
     """
-    /보고 이후 텍스트를 파싱해 dict 반환.
+    /report 이후 텍스트를 파싱해 dict 반환.
     발굴인도 항목이 없으면 None 반환(유효하지 않은 보고).
     """
     lines = text.splitlines()
@@ -145,7 +145,7 @@ def build_summary(date_str: str | None = None) -> str:
 
     return "\n".join(lines)
 
-# ── /등록 ─────────────────────────────────────────────────
+# ── /register ─────────────────────────────────────────────────
 async def cmd_register(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.id != GROUP_CHAT_ID:
         await update.message.reply_text("⚠️ 특전대 그룹 채팅방에서 등록해주세요.")
@@ -163,7 +163,7 @@ async def cmd_register(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"🎉 <b>{name}</b>님 등록 완료!\n\n"
         "보고는 아래 양식으로 보내주세요:\n\n"
-        "<code>/보고\n"
+        "<code>/report\n"
         "전도활동: (내용)\n"
         "발굴인도: 0건 (이름)\n"
         "찾기인도: 0건 (이름)\n"
@@ -175,7 +175,7 @@ async def cmd_register(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
 
-# ── /보고 ─────────────────────────────────────────────────
+# ── /report ─────────────────────────────────────────────────
 async def cmd_report(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.id != GROUP_CHAT_ID:
         await update.message.reply_text("⚠️ 특전대 그룹 채팅방에서 보고해주세요.")
@@ -196,7 +196,7 @@ async def cmd_report(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     # 구성원 체크
     if not is_member(uid):
-        await update.message.reply_text("⚠️ 먼저 <code>/등록</code> 명령어로 등록해주세요.", parse_mode="HTML")
+        await update.message.reply_text("⚠️ 먼저 <code>/register</code> 명령어로 등록해주세요.", parse_mode="HTML")
         return
 
     # 파싱
@@ -205,7 +205,7 @@ async def cmd_report(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if parsed is None:
         await update.message.reply_text(
             "❌ 보고 양식이 올바르지 않습니다.\n\n"
-            "<code>/보고\n"
+            "<code>/report\n"
             "전도활동: (내용)\n"
             "발굴인도: 0건 (이름)\n"
             "찾기인도: 0건 (이름)\n"
@@ -269,13 +269,13 @@ async def cmd_report(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             parse_mode="HTML"
         )
 
-# ── /취합 (관리자) ────────────────────────────────────────
+# ── /summary (관리자) ────────────────────────────────────────
 async def cmd_summary(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         return
     await update.message.reply_text(build_summary(), parse_mode="HTML")
 
-# ── /미보고 (관리자) ──────────────────────────────────────
+# ── /missing (관리자) ──────────────────────────────────────
 async def cmd_unreported(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         return
@@ -288,16 +288,16 @@ async def cmd_unreported(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         msg = "✅ 모든 구성원이 보고 완료했습니다!"
     await update.message.reply_text(msg, parse_mode="HTML")
 
-# ── /도움말 ───────────────────────────────────────────────
+# ── /help ───────────────────────────────────────────────
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "💙 <b>특전대 일일보고 봇 명령어</b>\n\n"
-        "/등록 — 구성원 등록 (최초 1회)\n"
-        "/보고 — 일일보고 제출\n"
-        "/도움말 — 이 메시지\n\n"
+        "/register — 구성원 등록 (최초 1회)\n"
+        "/report — 일일보고 제출\n"
+        "/help — 이 메시지\n\n"
         "<b>관리자 전용</b>\n"
-        "/취합 — 오늘 보고 전체 취합\n"
-        "/미보고 — 미보고 인원 확인",
+        "/summary — 오늘 보고 전체 취합\n"
+        "/missing — 미보고 인원 확인",
         parse_mode="HTML"
     )
 
@@ -330,7 +330,7 @@ async def job_remind(ctx: ContextTypes.DEFAULT_TYPE):
             f"아직 보고 미완료 인원입니다:\n"
             f"⚠️ {names_str}\n\n"
             f"오후 9시까지 보고 부탁드립니다! 💪\n"
-            f"(<code>/보고</code> 명령어 사용)"
+            f"(<code>/report</code> 명령어 사용)"
         ),
         parse_mode="HTML"
     )
@@ -372,11 +372,11 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("등록", cmd_register))
-    app.add_handler(CommandHandler("보고", cmd_report))
-    app.add_handler(CommandHandler("취합", cmd_summary))
-    app.add_handler(CommandHandler("미보고", cmd_unreported))
-    app.add_handler(CommandHandler("도움말", cmd_help))
+    app.add_handler(CommandHandler("register", cmd_register))
+    app.add_handler(CommandHandler("report", cmd_report))
+    app.add_handler(CommandHandler("summary", cmd_summary))
+    app.add_handler(CommandHandler("missing", cmd_unreported))
+    app.add_handler(CommandHandler("help", cmd_help))
 
     jq: JobQueue = app.job_queue
 
