@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>특전대 일일보고 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --blue: #1a6aff;
+    --blue-dark: #0050cc;
+    --blue-glow: rgba(26,106,255,0.18);
+    --navy: #080e2a;
+    --navy2: #0d1535;
+    --navy3: #111c44;
+    --navy4: #1a2555;
+    --gold: #f5c842;
+    --text: #e8eaf6;
+    --muted: #6b7aaa;
+    --success: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── 로그인 화면 ── */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 40%, #0a1a4a 0%, var(--navy) 70%);
+  }
+  .login-box {
+    background: var(--navy2);
+    border: 1px solid var(--navy4);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 360px;
+    text-align: center;
+    box-shadow: var(--shadow), 0 0 60px rgba(26,106,255,0.08);
+  }
+  .login-logo {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 2.4rem;
+    letter-spacing: 3px;
+    color: var(--blue);
+    margin-bottom: 6px;
+  }
+  .login-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 32px; letter-spacing: 1px; }
+  .pin-display {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .pin-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--navy4);
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .pin-dot.filled { background: var(--blue); border-color: var(--blue); box-shadow: 0 0 8px var(--blue-glow); }
+  .pin-dot.error { background: var(--danger); border-color: var(--danger); }
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .key {
+    background: var(--navy3);
+    border: 1px solid var(--navy4);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .key:hover { background: var(--navy4); border-color: var(--blue); }
+  .key:active { transform: scale(0.94); }
+  .key.del { font-size: 0.9rem; color: var(--muted); }
+  .key.empty { visibility: hidden; }
+  .login-error {
+    color: var(--danger);
+    font-size: 0.78rem;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  /* ── 대시보드 ── */
+  #dashboard { display: none; }
+
+  /* 헤더 */
+  .header {
+    background: var(--navy2);
+    border-bottom: 1px solid var(--navy4);
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    color: var(--blue);
+  }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .date-badge {
+    background: var(--navy3);
+    border: 1px solid var(--navy4);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .logout-btn {
+    background: transparent;
+    border: 1px solid var(--navy4);
+    border-radius: 8px;
+    padding: 5px 12px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* 탭 */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 20px 28px 0;
+    border-bottom: 1px solid var(--navy4);
+    background: var(--navy2);
+  }
+  .tab {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* 메인 영역 */
+  .main { padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
+
+  /* 날짜 선택 */
+  .date-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .date-input {
+    background: var(--navy2);
+    border: 1px solid var(--navy4);
+    border-radius: 10px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+  }
+  .date-input:focus { border-color: var(--blue); }
+  .refresh-btn {
+    background: var(--blue);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 18px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .refresh-btn:hover { background: var(--blue-dark); }
+
+  /* 통계 카드 그리드 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--navy2);
+    border: 1px solid var(--navy4);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--blue); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent, var(--blue));
+  }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-unit { font-size: 0.9rem; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .stat-sub { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+  /* 섹션 */
+  .section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    margin-top: 28px;
+  }
+
+  /* 2열 레이아웃 */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* 카드 */
+  .card {
+    background: var(--navy2);
+    border: 1px solid var(--navy4);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  /* 미보고 목록 */
+  .unreported-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .unreported-chip {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    color: #f87171;
+  }
+
+  /* 보고자 목록 */
+  .reporter-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--navy4);
+  }
+  .reporter-item:last-child { border-bottom: none; }
+  .reporter-name { font-size: 0.9rem; font-weight: 500; }
+  .reporter-time { font-size: 0.75rem; color: var(--muted); }
+  .reporter-dots { display: flex; gap: 6px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--navy4);
+  }
+  .dot.active { background: var(--success); }
+
+  /* 개인 실적 탭 */
+  .member-select {
+    background: var(--navy2);
+    border: 1px solid var(--navy4);
+    border-radius: 10px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 20px;
+    width: 240px;
+  }
+
+  .perf-bar-wrap { margin-bottom: 12px; }
+  .perf-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.8rem; margin-bottom: 5px;
+  }
+  .perf-bar-label span:first-child { color: var(--muted); }
+  .perf-bar-label span:last-child { color: var(--text); font-weight: 500; }
+  .perf-bar-track {
+    height: 6px; background: var(--navy4); border-radius: 3px; overflow: hidden;
+  }
+  .perf-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: var(--blue);
+    transition: width 0.6s ease;
+  }
+
+  /* 출석 캘린더 */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .cal-day-label {
+    text-align: center; font-size: 0.68rem; color: var(--muted);
+    padding-bottom: 4px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--navy3);
+    cursor: default;
+  }
+  .cal-day.reported { background: rgba(26,106,255,0.25); color: var(--blue); font-weight: 700; }
+  .cal-day.today { border: 1.5px solid var(--blue); }
+  .cal-day.empty { background: transparent; }
+
+  /* 로딩 */
+  .loading { text-align: center; color: var(--muted); padding: 40px; font-size: 0.9rem; }
+
+  /* 배지 */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .badge-blue { background: var(--blue-glow); color: var(--blue); }
+  .badge-gold { background: rgba(245,200,66,0.15); color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ── 로그인 ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">특전대</div>
+    <div class="login-sub">DAILY REPORT DASHBOARD</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="keypad" id="keypad">
+      <button class="key" onclick="pressKey('1')">1</button>
+      <button class="key" onclick="pressKey('2')">2</button>
+      <button class="key" onclick="pressKey('3')">3</button>
+      <button class="key" onclick="pressKey('4')">4</button>
+      <button class="key" onclick="pressKey('5')">5</button>
+      <button class="key" onclick="pressKey('6')">6</button>
+      <button class="key" onclick="pressKey('7')">7</button>
+      <button class="key" onclick="pressKey('8')">8</button>
+      <button class="key" onclick="pressKey('9')">9</button>
+      <button class="key empty"></button>
+      <button class="key" onclick="pressKey('0')">0</button>
+      <button class="key del" onclick="deleteKey()">⌫</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ── 대시보드 ── -->
+<div id="dashboard">
+  <div class="header">
+    <div class="header-title">💙 특전대 일일보고</div>
+    <div class="header-right">
+      <div class="date-badge" id="today-badge"></div>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('daily', this)">일일 통계</div>
+    <div class="tab" onclick="switchTab('member', this)">개인 실적</div>
+  </div>
+
+  <!-- 일일 통계 탭 -->
+  <div id="tab-daily" class="main">
+    <div class="date-control">
+      <input type="date" class="date-input" id="date-picker">
+      <button class="refresh-btn" onclick="loadDaily()">조회</button>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="loading">데이터 로딩 중...</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">📊 항목별 현황</div>
+        <canvas id="bar-chart" height="180"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 보고 현황</div>
+        <div id="reporter-list"><div class="loading">로딩 중...</div></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:24px">⚠️ 미보고 인원</div>
+    <div class="card">
+      <div class="unreported-list" id="unreported-list">
+        <span class="loading">로딩 중...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 개인 실적 탭 -->
+  <div id="tab-member" class="main" style="display:none">
+    <select class="member-select" id="member-select" onchange="loadMember()">
+      <option value="">구성원 선택</option>
+    </select>
+
+    <div id="member-content">
+      <div class="loading" style="padding: 60px">구성원을 선택해주세요</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 설정 ──────────────────────────────────────────────────
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';       // ← 교체
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';  // ← 교체
+const PASSWORD = '0688';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── 로그인 ────────────────────────────────────────────────
+let pin = '';
+function pressKey(k) {
+  if (pin.length >= 4) return;
+  pin += k;
+  updateDots();
+  if (pin.length === 4) {
+    setTimeout(checkPin, 100);
+  }
+}
+function deleteKey() {
+  pin = pin.slice(0, -1);
+  updateDots();
+  document.getElementById('login-error').textContent = '';
+}
+function updateDots(err = false) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById(`d${i}`);
+    d.className = 'pin-dot' + (i < pin.length ? (err ? ' error' : ' filled') : '');
+  }
+}
+function checkPin() {
+  if (pin === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    initDashboard();
+  } else {
+    updateDots(true);
+    document.getElementById('login-error').textContent = '비밀번호가 틀렸습니다';
+    setTimeout(() => { pin = ''; updateDots(); document.getElementById('login-error').textContent = ''; }, 1000);
+  }
+}
+
+// 키보드 입력 지원
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('login-screen').style.display === 'none') return;
+  if (e.key >= '0' && e.key <= '9') {
+    pressKey(e.key);
+    // 눌린 키 버튼 시각 피드백
+    const btns = document.querySelectorAll('.key');
+    btns.forEach(b => { if (b.textContent.trim() === e.key) { b.style.background = 'var(--navy4)'; b.style.borderColor = 'var(--blue)'; setTimeout(() => { b.style.background = ''; b.style.borderColor = ''; }, 150); } });
+  } else if (e.key === 'Backspace') {
+    deleteKey();
+  } else if (e.key === 'Enter' && pin.length === 4) {
+    checkPin();
+  }
+});
+
+function logout() {
+  pin = '';
+  updateDots();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+// ── 탭 ───────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-daily').style.display = name === 'daily' ? 'block' : 'none';
+  document.getElementById('tab-member').style.display = name === 'member' ? 'block' : 'none';
+  if (name === 'member') loadMemberList();
+}
+
+// ── 초기화 ────────────────────────────────────────────────
+let barChart = null;
+function initDashboard() {
+  const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+  document.getElementById('today-badge').textContent = today;
+
+  const dp = document.getElementById('date-picker');
+  dp.value = new Date().toISOString().slice(0, 10);
+  loadDaily();
+}
+
+// ── 일일 통계 로드 ────────────────────────────────────────
+async function loadDaily() {
+  const date = document.getElementById('date-picker').value;
+  if (!date) return;
+
+  const [{ data: reports }, { data: members }] = await Promise.all([
+    db.from('reports').select('*').eq('report_date', date),
+    db.from('members').select('*').eq('active', true)
+  ]);
+
+  renderStats(reports || []);
+  renderReporters(reports || [], members || []);
+  renderUnreported(reports || [], members || []);
+  renderBarChart(reports || []);
+}
+
+function sum(arr, key) { return arr.reduce((s, r) => s + (r[key] || 0), 0); }
+
+function renderStats(rows) {
+  const total = rows.length;
+  const 발굴 = sum(rows, '발굴건수');
+  const 찾기 = sum(rows, '찾기건수');
+  const 합자 = sum(rows, '합자건수');
+  const 섭외 = sum(rows, '섭외인도건수') + sum(rows, '섭외교사건수');
+  const 복음방 = sum(rows, '복음방인도건수') + sum(rows, '복음방교사건수');
+
+  const cards = [
+    { label: '보고 인원', value: total, unit: '명', accent: '#1a6aff' },
+    { label: '발굴 인도', value: 발굴, unit: '건', accent: '#22c55e' },
+    { label: '찾기 인도', value: 찾기, unit: '건', accent: '#3b82f6' },
+    { label: '합자', value: 합자, unit: '건', accent: '#f5c842' },
+    { label: '섭외 (인도+교사)', value: 섭외, unit: '건', accent: '#f59e0b' },
+    { label: '복음방 (인도+교사)', value: 복음방, unit: '건', accent: '#ec4899' },
+  ];
+
+  document.getElementById('stats-grid').innerHTML = cards.map(c => `
+    <div class="stat-card" style="--accent:${c.accent}">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.value}<span class="stat-unit">${c.unit}</span></div>
+    </div>
+  `).join('');
+}
+
+function renderReporters(reports, members) {
+  const FIELDS = ['발굴건수','찾기건수','합자건수','섭외인도건수','섭외교사건수','복음방인도건수','복음방교사건수'];
+  const html = reports.map(r => {
+    const dots = FIELDS.map(f => `<div class="dot ${r[f] > 0 ? 'active' : ''}"></div>`).join('');
+    return `<div class="reporter-item">
+      <div>
+        <div class="reporter-name">${r.name}</div>
+        <div class="reporter-time">${r.report_time || '-'} 보고</div>
+      </div>
+      <div class="reporter-dots">${dots}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('reporter-list').innerHTML = html || '<div class="loading">보고 없음</div>';
+}
+
+function renderUnreported(reports, members) {
+  const reportedIds = new Set(reports.map(r => String(r.telegram_id)));
+  const unreported = members.filter(m => !reportedIds.has(String(m.telegram_id)));
+  const el = document.getElementById('unreported-list');
+  if (!unreported.length) {
+    el.innerHTML = '<span style="color:var(--success);font-size:0.85rem">✅ 모든 구성원 보고 완료!</span>';
+  } else {
+    el.innerHTML = unreported.map(m => `<span class="unreported-chip">${m.name}</span>`).join('');
+  }
+}
+
+function renderBarChart(rows) {
+  const labels = ['발굴인도','찾기인도','합자','섭외인도','섭외교사','복음방인도','복음방교사'];
+  const keys   = ['발굴건수','찾기건수','합자건수','섭외인도건수','섭외교사건수','복음방인도건수','복음방교사건수'];
+  const data   = keys.map(k => sum(rows, k));
+  const colors = ['#1a6aff','#3b82f6','#f5c842','#f59e0b','#f97316','#ec4899','#a855f7'];
+
+  const ctx = document.getElementById('bar-chart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data, backgroundColor: colors,
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7aaa', font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#6b7aaa', stepSize: 1 }, grid: { color: '#1a2555' } }
+      }
+    }
+  });
+}
+
+// ── 개인 실적 ──────────────────────────────────────────────
+async function loadMemberList() {
+  const { data: members } = await db.from('members').select('*').eq('active', true);
+  const sel = document.getElementById('member-select');
+  sel.innerHTML = '<option value="">구성원 선택</option>' +
+    (members || []).map(m => `<option value="${m.telegram_id}">${m.name}</option>`).join('');
+}
+
+async function loadMember() {
+  const tid = document.getElementById('member-select').value;
+  if (!tid) return;
+
+  const { data: reports } = await db.from('reports').select('*')
+    .eq('telegram_id', tid).order('report_date', { ascending: false });
+
+  if (!reports || !reports.length) {
+    document.getElementById('member-content').innerHTML =
+      '<div class="loading">보고 데이터 없음</div>';
+    return;
+  }
+
+  const name = reports[0].name;
+  const total = reports.length;
+
+  // 항목 합계
+  const ITEMS = [
+    { label: '발굴인도', key: '발굴건수', color: '#22c55e' },
+    { label: '찾기인도', key: '찾기건수', color: '#3b82f6' },
+    { label: '합자', key: '합자건수', color: '#f5c842' },
+    { label: '섭외인도', key: '섭외인도건수', color: '#f59e0b' },
+    { label: '섭외교사', key: '섭외교사건수', color: '#f97316' },
+    { label: '복음방인도', key: '복음방인도건수', color: '#ec4899' },
+    { label: '복음방교사', key: '복음방교사건수', color: '#a855f7' },
+  ];
+
+  const maxVal = Math.max(1, ...ITEMS.map(i => sum(reports, i.key)));
+
+  const bars = ITEMS.map(i => {
+    const v = sum(reports, i.key);
+    const pct = Math.round(v / maxVal * 100);
+    return `<div class="perf-bar-wrap">
+      <div class="perf-bar-label"><span>${i.label}</span><span>${v}건</span></div>
+      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${pct}%;background:${i.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  // 최근 보고 목록
+  const recent = reports.slice(0, 10).map(r => `
+    <div class="reporter-item">
+      <div>
+        <div class="reporter-name" style="font-size:0.85rem">${r.report_date} <span style="color:var(--muted);font-size:0.75rem">${r.report_time}</span></div>
+        <div class="reporter-time">발굴 ${r.발굴건수||0} / 찾기 ${r.찾기건수||0} / 합자 ${r.합자건수||0}</div>
+      </div>
+      <span class="badge badge-blue">보고완료</span>
+    </div>
+  `).join('');
+
+  // 이번달 캘린더
+  const cal = buildCalendar(reports);
+
+  document.getElementById('member-content').innerHTML = `
+    <div style="margin-bottom:16px">
+      <span style="font-size:1.1rem;font-weight:700">${name}</span>
+      <span class="badge badge-gold" style="margin-left:8px">총 ${total}일 보고</span>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title">📊 누적 실적</div>
+        ${bars}
+      </div>
+      <div class="card">
+        <div class="card-title">📅 이번달 보고 현황</div>
+        ${cal}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 최근 보고 이력</div>
+      ${recent}
+    </div>
+  `;
+}
+
+function buildCalendar(reports) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  const reportedDates = new Set(
+    reports.filter(r => r.report_date.startsWith(`${year}-${String(month+1).padStart(2,'0')}`))
+           .map(r => r.report_date)
+  );
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const dayLabels = ['일','월','화','수','목','금','토'];
+
+  let cells = dayLabels.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) cells += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cls = ['cal-day', reportedDates.has(ds) ? 'reported' : '', ds === todayStr ? 'today' : ''].join(' ').trim();
+    cells += `<div class="${cls}">${d}</div>`;
+  }
+
+  return `<div class="cal-grid">${cells}</div>`;
+}
+</script>
+</body>
+</html>
