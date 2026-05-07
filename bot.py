@@ -171,8 +171,11 @@ async def send_to_group(bot, text, keyboard=None):
     await bot.send_message(**kwargs)
 
 # ── Mini App 버튼 ─────────────────────────────────────────
-def make_miniapp_keyboard():
+def make_miniapp_keyboard(chat_type: str = "group"):
+    """Mini App 버튼은 그룹에서만 작동 (DM이면 None 반환)"""
     if not MINIAPP_URL:
+        return None
+    if chat_type not in ("group", "supergroup"):
         return None
     return InlineKeyboardMarkup([[
         InlineKeyboardButton("📋 일일보고 작성하기", web_app=WebAppInfo(url=MINIAPP_URL + "/miniapp.html"))
@@ -180,7 +183,7 @@ def make_miniapp_keyboard():
 
 # ── 명령어 핸들러 ─────────────────────────────────────────
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    kb = make_miniapp_keyboard()
+    kb = make_miniapp_keyboard(update.effective_chat.type)
     await update.message.reply_text(
         "💙 <b>특전대 일일보고 봇 사용법</b>\n\n"
 
@@ -217,7 +220,7 @@ async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 # ── /form - 미니앱 버튼만 단독 전송 ──────────────────────
 async def cmd_form(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    kb = make_miniapp_keyboard()
+    kb = make_miniapp_keyboard(update.effective_chat.type)
     if not kb:
         await update.message.reply_text(
             "⚠️ Mini App URL이 설정되지 않았습니다.\n/report 명령어로 직접 보고해주세요.",
@@ -248,7 +251,7 @@ async def cmd_register(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"✅ <b>{name}</b>님은 이미 등록되어 있습니다.", parse_mode="HTML")
         return
     supabase.table("members").insert({"telegram_id": uid, "name": name, "active": True}).execute()
-    kb = make_miniapp_keyboard()
+    kb = make_miniapp_keyboard(update.effective_chat.type)
     await update.message.reply_text(
         f"🎉 <b>{name}</b>님 등록 완료!\n\n"
         "아래 버튼으로 보고하거나 직접 입력:\n\n"
@@ -278,7 +281,7 @@ async def cmd_report(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             "❌ 양식 오류\n\n<code>/report\n전도활동: (내용)\n발굴인도: 0건 (이름)\n"
             "찾기인도: 0건\n합자: 0건\n섭외인도: 0건\n섭외교사: 0건\n"
             "복음방인도: 0건\n복음방교사: 0건</code>",
-            parse_mode="HTML", reply_markup=make_miniapp_keyboard()
+            parse_mode="HTML", reply_markup=make_miniapp_keyboard(update.effective_chat.type)
         )
         return
 
@@ -345,7 +348,7 @@ async def job_remind(ctx: ContextTypes.DEFAULT_TYPE):
         return
     h, m = now.hour, now.minute
     label = f"오후 {h-12 if h > 12 else h}시" + (f" {m}분" if m else "")
-    kb = make_miniapp_keyboard()
+    kb = make_miniapp_keyboard("supergroup")
     await send_to_group(
         ctx.bot,
         f"📢 <b>[{label} 보고 독려]</b>\n\n"
