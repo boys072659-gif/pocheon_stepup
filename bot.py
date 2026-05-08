@@ -252,28 +252,24 @@ async def handle_edited(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "💙 <b>특전대 일일보고 사용법</b>\n\n"
-        "아래 양식대로 올리면 자동 저장됩니다!\n\n"
-        "━━━━━━━━━━━━━━━━━\n"
-        "<b>📋 보고 양식</b>\n"
-        "━━━━━━━━━━━━━━━━━\n"
-        "<code>전도활동: 강남역 노방전도\n"
-        "발굴인도: 2건 (홍길동, 김철수)\n"
+        "<code>전도활동: \n"
+        "발굴인도: 0건\n"
         "찾기인도: 0건\n"
         "합자: 0건\n"
         "섭외인도: 0건\n"
         "섭외교사: 0건\n"
         "복음방인도: 0건\n"
         "복음방교사: 0건</code>\n\n"
-        "📌 수정하면 자동 반영\n"
-        "📌 여러 번 올리면 마지막 내용 저장\n"
-        "📌 마감: 오후 9시\n\n"
-        "━━━━━━━━━━━━━━━━━\n"
-        "<b>관리자 명령어</b>\n"
-        "━━━━━━━━━━━━━━━━━\n"
-        "/summary — 오늘 전체 취합\n"
-        "/missing — 미보고 인원 확인",
-        parse_mode="HTML"
+        "📊 <a href="https://boys072659-gif.github.io/pocheon_stepup/dashboard.html">대시보드 바로가기</a>",
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
+
+async def cmd_dashboard(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📊 <a href="https://boys072659-gif.github.io/pocheon_stepup/dashboard.html">대시보드 바로가기</a>",
+        parse_mode="HTML",
+        disable_web_page_preview=True
     )
 
 async def cmd_summary(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -328,6 +324,7 @@ def main():
 
     app.add_handler(CommandHandler("start",   cmd_help))
     app.add_handler(CommandHandler("help",    cmd_help))
+    app.add_handler(CommandHandler("dashboard", cmd_dashboard))
     app.add_handler(CommandHandler("summary", cmd_summary))
     app.add_handler(CommandHandler("missing", cmd_unreported))
     app.add_handler(MessageHandler(
