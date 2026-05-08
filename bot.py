@@ -121,7 +121,7 @@ def is_member(user_id):
 def get_reported_ids(date_str=None):
     ds = date_str or today_str()
     res = supabase.table("reports").select("telegram_id").eq("report_date", ds).execute()
-    return {r["telegram_id"] for r in (res.data or [])}
+    return {str(r["telegram_id"]) for r in (res.data or [])}
 
 # ── 취합 메시지 ───────────────────────────────────────────
 def build_summary(date_str=None):
@@ -150,8 +150,8 @@ def build_summary(date_str=None):
         )
 
     members = get_members()
-    reported = {r["telegram_id"] for r in rows}
-    unreported = [m["name"] for m in members if m["telegram_id"] not in reported]
+    reported = {str(r["telegram_id"]) for r in rows}
+    unreported = [m["name"] for m in members if str(m["telegram_id"]) not in reported]
     if unreported:
         lines.append("\n⚠️ <b>미보고</b>: " + ", ".join(unreported))
     return "\n".join(lines)
@@ -341,7 +341,7 @@ async def cmd_unreported(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     members = get_members()
     reported = get_reported_ids()
-    unreported = [m["name"] for m in members if m["telegram_id"] not in reported]
+    unreported = [m["name"] for m in members if str(m["telegram_id"]) not in reported]
     msg = ("⚠️ <b>미보고 인원</b>\n\n" + "\n".join(f"• {n}" for n in unreported)
            if unreported else "✅ 모든 구성원 보고 완료!")
     await update.message.reply_text(msg, parse_mode="HTML")
@@ -353,7 +353,7 @@ async def job_remind(ctx: ContextTypes.DEFAULT_TYPE):
         return
     members = get_members()
     reported = get_reported_ids()
-    unreported = [m["name"] for m in members if m["telegram_id"] not in reported]
+    unreported = [m["name"] for m in members if str(m["telegram_id"]) not in reported]
     if not unreported:
         return
     h, m = now.hour, now.minute

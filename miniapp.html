@@ -2,211 +2,331 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>특전대 일일보고</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --blue: #1a6aff;
-    --navy: #0d1535;
-    --navy2: #111c44;
-    --navy3: #1a2555;
-    --text: #e8eaf6;
-    --muted: #6b7aaa;
-    --success: #22c55e;
-    --danger: #ef4444;
-    --radius: 12px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, 'Noto Sans KR', sans-serif;
-    background: var(--tg-theme-bg-color, var(--navy));
-    color: var(--tg-theme-text-color, var(--text));
-    padding: 16px;
-    min-height: 100vh;
-  }
-  .header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .header h1 { font-size: 1.1rem; font-weight: 700; color: var(--blue); }
-  .header p { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+:root {
+  --primary: #3B82F6;
+  --primary-light: #EFF6FF;
+  --primary-dark: #1D4ED8;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface2: #F1F5F9;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text2: #475569;
+  --text3: #94A3B8;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gold: #F59E0B;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  background: var(--tg-theme-bg-color, var(--bg));
+  color: var(--tg-theme-text-color, var(--text));
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
 
-  .form-group { margin-bottom: 14px; }
-  label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 5px;
-    letter-spacing: 0.5px;
-  }
-  input[type="text"], textarea {
-    width: 100%;
-    background: var(--tg-theme-secondary-bg-color, var(--navy2));
-    border: 1px solid var(--navy3);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    color: var(--tg-theme-text-color, var(--text));
-    font-size: 0.9rem;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  input:focus, textarea:focus { border-color: var(--blue); }
-  textarea { resize: none; height: 60px; }
+/* 헤더 */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 10px;
+}
+.header-icon {
+  width: 36px; height: 36px;
+  background: var(--primary);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.header-text h1 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.header-text p { font-size: 0.72rem; color: var(--text3); margin-top: 1px; }
 
-  .row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; }
-  input[type="number"] {
-    width: 100%;
-    background: var(--tg-theme-secondary-bg-color, var(--navy2));
-    border: 1px solid var(--navy3);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    color: var(--tg-theme-text-color, var(--text));
-    font-size: 0.9rem;
-    font-family: inherit;
-    outline: none;
-    text-align: center;
-  }
-  input[type="number"]:focus { border-color: var(--blue); }
+/* 컨텐츠 */
+.content { padding: 16px; }
 
-  .section-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--blue);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin: 20px 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--navy3);
-  }
+/* 카드 */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+}
+.card-header-icon { font-size: 0.9rem; }
+.card-header-title { font-size: 0.8rem; font-weight: 700; color: var(--text2); letter-spacing: 0.3px; }
+.card-body { padding: 14px 16px; }
 
-  .submit-btn {
-    width: 100%;
-    background: var(--blue);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: opacity 0.2s;
-  }
-  .submit-btn:active { opacity: 0.8; }
-  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* 폼 그룹 */
+.form-group { margin-bottom: 10px; }
+.form-group:last-child { margin-bottom: 0; }
 
-  .toast {
-    position: fixed;
-    bottom: 24px; left: 50%;
-    transform: translateX(-50%);
-    background: var(--success);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; }
-  .toast.error { background: var(--danger); }
+label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--text2); margin-bottom: 6px;
+}
+.count-pill {
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.68rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  min-width: 26px; text-align: center;
+  transition: all 0.2s;
+}
+.count-pill.zero { background: var(--border); color: var(--text3); }
 
-  .stepup-notice {
-    background: rgba(245,200,66,0.1);
-    border: 1px solid rgba(245,200,66,0.3);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-size: 0.8rem;
-    color: #f5c842;
-    margin-top: 12px;
-    display: none;
-  }
-  .stepup-notice.show { display: block; }
+textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  height: 60px;
+  transition: border-color 0.2s;
+}
+textarea:focus { border-color: var(--primary); background: #fff; }
+
+/* 결과 행 - 숫자 + 이름 */
+.result-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+}
+input[type="number"] {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  color: var(--text);
+  font-size: 1rem; font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type="number"]:focus { border-color: var(--primary); background: #fff; }
+input[type="text"] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input[type="text"]:focus { border-color: var(--primary); background: #fff; }
+input::placeholder, textarea::placeholder { color: var(--text3); }
+
+/* 스텝업 안내 */
+.stepup-notice {
+  background: #FFFBEB;
+  border: 1.5px solid #FDE68A;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #92400E;
+  display: none;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.stepup-notice.show { display: flex; gap: 8px; align-items: flex-start; }
+
+/* 제출 버튼 */
+.submit-wrap {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+}
+.submit-btn {
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.submit-btn.success { background: var(--success); }
+
+/* 토스트 */
+.toast {
+  position: fixed;
+  top: 70px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 999;
+  box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; }
+.toast.error { background: var(--danger); }
+.toast.ok { background: var(--success); }
+
+/* 구분선 */
+.divider { height: 1px; background: var(--border); margin: 10px 0; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>💙 특전대 일일보고</h1>
-  <p id="date-label"></p>
-</div>
-
-<div class="section-title">전도활동</div>
-<div class="form-group">
-  <label>활동 내용</label>
-  <textarea id="activity" placeholder="예) 강남역 노방전도"></textarea>
-</div>
-
-<div class="section-title">보고 결과</div>
-
-<div class="form-group">
-  <label>발굴 인도</label>
-  <div class="row">
-    <input type="number" id="발굴건수" value="0" min="0">
-    <input type="text" id="발굴이름" placeholder="이름 (예: 김철수, 이영희)">
+  <div class="header-icon">💙</div>
+  <div class="header-text">
+    <h1>특전대 일일보고</h1>
+    <p id="date-label">로딩 중...</p>
   </div>
 </div>
 
-<div class="form-group">
-  <label>찾기 인도</label>
-  <div class="row">
-    <input type="number" id="찾기건수" value="0" min="0">
-    <input type="text" id="찾기이름" placeholder="이름">
+<div class="content">
+
+  <!-- 전도활동 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">🗺️</span>
+      <span class="card-header-title">전도활동 내용</span>
+    </div>
+    <div class="card-body">
+      <textarea id="activity" placeholder="예) 강남역 노방전도, 아파트 심방 등"></textarea>
+    </div>
   </div>
-</div>
 
-<div class="form-group">
-  <label>합자</label>
-  <div class="row">
-    <input type="number" id="합자건수" value="0" min="0" oninput="checkStepup()">
-    <input type="text" id="합자이름" placeholder="이름">
+  <!-- 보고 결과 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">📊</span>
+      <span class="card-header-title">보고 결과</span>
+    </div>
+    <div class="card-body">
+
+      <div class="form-group">
+        <label>발굴 인도 <span class="count-pill zero" id="pill-발굴">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="발굴건수" value="0" min="0" oninput="updatePill('발굴')">
+          <input type="text" id="발굴이름" placeholder="이름 (예: 홍길동, 김철수)">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label>찾기 인도 <span class="count-pill zero" id="pill-찾기">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="찾기건수" value="0" min="0" oninput="updatePill('찾기')">
+          <input type="text" id="찾기이름" placeholder="이름">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label>합자 <span class="count-pill zero" id="pill-합자">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="합자건수" value="0" min="0" oninput="updatePill('합자'); checkStepup()">
+          <input type="text" id="합자이름" placeholder="이름">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label>섭외 인도 <span class="count-pill zero" id="pill-섭외인도">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="섭외인도건수" value="0" min="0" oninput="updatePill('섭외인도'); checkStepup()">
+          <input type="text" id="섭외인도이름" placeholder="이름">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>섭외 교사 <span class="count-pill zero" id="pill-섭외교사">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="섭외교사건수" value="0" min="0" oninput="updatePill('섭외교사'); checkStepup()">
+          <input type="text" id="섭외교사이름" placeholder="이름">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label>복음방 인도 <span class="count-pill zero" id="pill-복음방인도">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="복음방인도건수" value="0" min="0" oninput="updatePill('복음방인도'); checkStepup()">
+          <input type="text" id="복음방인도이름" placeholder="이름">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>복음방 교사 <span class="count-pill zero" id="pill-복음방교사">0건</span></label>
+        <div class="result-row">
+          <input type="number" id="복음방교사건수" value="0" min="0" oninput="updatePill('복음방교사'); checkStepup()">
+          <input type="text" id="복음방교사이름" placeholder="이름">
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<div class="form-group">
-  <label>섭외 인도</label>
-  <div class="row">
-    <input type="number" id="섭외인도건수" value="0" min="0" oninput="checkStepup()">
-    <input type="text" id="섭외인도이름" placeholder="이름">
+  <!-- 스텝업 안내 -->
+  <div class="stepup-notice" id="stepup-notice">
+    <span>📸</span>
+    <span>합자 / 섭외 / 복음방 건이 보고되었습니다.<br><b>스텝업 촬영본을 함께 올려주세요!</b></span>
   </div>
+
 </div>
 
-<div class="form-group">
-  <label>섭외 교사</label>
-  <div class="row">
-    <input type="number" id="섭외교사건수" value="0" min="0" oninput="checkStepup()">
-    <input type="text" id="섭외교사이름" placeholder="이름">
-  </div>
+<!-- 제출 버튼 -->
+<div class="submit-wrap">
+  <button class="submit-btn" id="submit-btn" onclick="submitReport()">
+    <span>✅</span> 보고 제출하기
+  </button>
 </div>
-
-<div class="form-group">
-  <label>복음방 인도</label>
-  <div class="row">
-    <input type="number" id="복음방인도건수" value="0" min="0" oninput="checkStepup()">
-    <input type="text" id="복음방인도이름" placeholder="이름">
-  </div>
-</div>
-
-<div class="form-group">
-  <label>복음방 교사</label>
-  <div class="row">
-    <input type="number" id="복음방교사건수" value="0" min="0" oninput="checkStepup()">
-    <input type="text" id="복음방교사이름" placeholder="이름">
-  </div>
-</div>
-
-<div class="stepup-notice" id="stepup-notice">
-  📸 합자 / 섭외 / 복음방 건이 있습니다. 스텝업 촬영본도 함께 올려주세요!
-</div>
-
-<button class="submit-btn" id="submit-btn" onclick="submitReport()">보고 제출</button>
 
 <div class="toast" id="toast"></div>
 
@@ -223,52 +343,81 @@ const user = tg?.initDataUnsafe?.user;
 const userId = user?.id || 0;
 const userName = user ? ((user.last_name||'') + (user.first_name||user.username||'이름없음')) : '테스트유저';
 
-// 날짜 표시
-const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
-document.getElementById('date-label').textContent = today;
+// 날짜
+const now = new Date();
+const kst = new Date(now.getTime() + 9*3600000);
+const dateStr = kst.toISOString().slice(0,10);
+document.getElementById('date-label').textContent =
+  kst.toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
+
+// 기존 보고 불러오기
+async function loadExisting() {
+  if (!userId) return;
+  const { data } = await db.from('reports').select('*')
+    .eq('telegram_id', userId).eq('report_date', dateStr).single();
+  if (!data) return;
+  document.getElementById('activity').value = data.activity || '';
+  const fields = ['발굴','찾기','합자','섭외인도','섭외교사','복음방인도','복음방교사'];
+  fields.forEach(f => {
+    const numEl = document.getElementById(f+'건수');
+    const nameEl = document.getElementById(f+'이름');
+    if (numEl) { numEl.value = data[f+'건수'] || 0; updatePill(f); }
+    if (nameEl) nameEl.value = data[f+'이름'] || '';
+  });
+  checkStepup();
+  showToast('📋 오늘 보고 내용을 불러왔습니다', 'ok');
+}
+loadExisting();
+
+function updatePill(key) {
+  const val = parseInt(document.getElementById(key+'건수')?.value) || 0;
+  const pill = document.getElementById('pill-'+key);
+  if (!pill) return;
+  pill.textContent = val + '건';
+  pill.className = 'count-pill' + (val === 0 ? ' zero' : '');
+}
 
 function checkStepup() {
   const keys = ['합자건수','섭외인도건수','섭외교사건수','복음방인도건수','복음방교사건수'];
-  const hasValue = keys.some(k => parseInt(document.getElementById(k).value||0) > 0);
-  document.getElementById('stepup-notice').classList.toggle('show', hasValue);
+  const has = keys.some(k => parseInt(document.getElementById(k)?.value||0) > 0);
+  document.getElementById('stepup-notice').className = 'stepup-notice' + (has ? ' show' : '');
 }
 
-function showToast(msg, isError=false) {
+function showToast(msg, type='') {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => t.className = 'toast', 2500);
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => { t.className = 'toast'; }, 2500);
 }
 
 function g(id) { return document.getElementById(id); }
-function iv(id) { return parseInt(g(id).value) || 0; }
-function sv(id) { return g(id).value.trim(); }
+function iv(id) { return parseInt(g(id)?.value) || 0; }
+function sv(id) { return g(id)?.value.trim() || ''; }
 
 async function submitReport() {
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = '제출 중...';
-
-  const now = new Date();
-  const kst = new Date(now.getTime() + 9*60*60*1000);
-  const dateStr = kst.toISOString().slice(0,10);
-  const timeStr = kst.toISOString().slice(11,16);
+  const btn = g('submit-btn');
 
   // 마감 체크
   if (kst.getHours() >= 21) {
-    showToast('⏰ 마감(오후 9시)이 지났습니다', true);
-    btn.disabled = false; btn.textContent = '보고 제출';
+    showToast('⏰ 보고 마감(오후 9시)이 지났습니다', 'error');
     return;
   }
 
-  // 구성원 등록 확인 & 없으면 자동 등록
-  const { data: memberData } = await db.from('members').select('id').eq('telegram_id', userId).eq('active', true);
-  if (!memberData?.length) {
-    await db.from('members').insert({ telegram_id: userId, name: userName, active: true });
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> 제출 중...';
+
+  const timeStr = kst.toISOString().slice(11,16);
+
+  // 구성원 자동 등록
+  if (userId) {
+    const { data: m } = await db.from('members').select('id').eq('telegram_id', userId).eq('active', true);
+    if (!m?.length) {
+      await db.from('members').insert({ telegram_id: userId, name: userName, active: true });
+    }
   }
 
-  const { error } = await db.from('reports').upsert({
-    telegram_id: userId,
+  const payload = {
+    telegram_id: userId || 0,
     name: userName,
     report_date: dateStr,
     report_time: timeStr,
@@ -281,18 +430,20 @@ async function submitReport() {
     복음방인도건수: iv('복음방인도건수'), 복음방인도이름: sv('복음방인도이름'),
     복음방교사건수: iv('복음방교사건수'), 복음방교사이름: sv('복음방교사이름'),
     raw_text: 'miniapp',
-  }, { onConflict: 'telegram_id,report_date' });
+  };
+
+  const { error } = await db.from('reports').upsert(payload, { onConflict: 'telegram_id,report_date' });
 
   if (error) {
-    showToast('오류가 발생했습니다', true);
-    btn.disabled = false; btn.textContent = '보고 제출';
+    showToast('❌ 오류가 발생했습니다', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<span>✅</span> 보고 제출하기';
     return;
   }
 
-  showToast('✅ 보고 완료!');
-  btn.textContent = '✅ 보고 완료';
-
-  // Telegram WebApp 닫기
+  btn.innerHTML = '<span>🎉</span> 보고 완료!';
+  btn.className = 'submit-btn success';
+  showToast('✅ 보고가 완료되었습니다!', 'ok');
   setTimeout(() => tg?.close(), 1500);
 }
 </script>
