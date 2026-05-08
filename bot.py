@@ -348,13 +348,12 @@ async def job_remind(ctx: ContextTypes.DEFAULT_TYPE):
         return
     h, m = now.hour, now.minute
     label = f"오후 {h-12 if h > 12 else h}시" + (f" {m}분" if m else "")
-    kb = make_miniapp_keyboard("supergroup")
     await send_to_group(
         ctx.bot,
         f"📢 <b>[{label} 보고 독려]</b>\n\n"
         f"미보고: ⚠️ {', '.join(unreported)}\n\n"
-        f"오후 9시까지 보고 부탁드립니다! 💪",
-        keyboard=kb
+        f"오후 9시까지 보고 부탁드립니다! 💪\n"
+        f"👉 /form 으로 보고해주세요"
     )
 
 async def job_final_summary(ctx: ContextTypes.DEFAULT_TYPE):
