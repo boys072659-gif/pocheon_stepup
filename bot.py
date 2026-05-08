@@ -259,15 +259,13 @@ async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "섭외인도: 0건\n"
         "섭외교사: 0건\n"
         "복음방인도: 0건\n"
-        "복음방교사: 0건</code>\n\n"
-        "📊 <a href="https://boys072659-gif.github.io/pocheon_stepup/dashboard.html">대시보드 바로가기</a>",
-        parse_mode="HTML",
-        disable_web_page_preview=True
+        "복음방교사: 0건</code>",
+        parse_mode="HTML"
     )
 
 async def cmd_dashboard(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📊 <a href="https://boys072659-gif.github.io/pocheon_stepup/dashboard.html">대시보드 바로가기</a>",
+        '📊 <a href="https://boys072659-gif.github.io/pocheon_stepup/dashboard.html">대시보드 바로가기</a>',
         parse_mode="HTML",
         disable_web_page_preview=True
     )
