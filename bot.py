@@ -261,11 +261,6 @@ async def handle_edited(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 # ── /help ─────────────────────────────────────────────────
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    try:
-        if update.effective_chat.type in ("group", "supergroup"):
-            await update.message.delete()
-    except:
-        pass
     await update.message.reply_text(
         "💙 <b>특전대 일일보고 사용법</b>\n\n"
         "명령어 없이 아래 양식대로 올리면 자동 저장됩니다!\n\n"
@@ -290,22 +285,12 @@ async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 async def cmd_summary(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         return
-    try:
-        if update.effective_chat.type in ("group", "supergroup"):
-            await update.message.delete()
-    except:
-        pass
     await update.message.reply_text(build_summary(), parse_mode="HTML")
 
 # ── /missing (관리자) ─────────────────────────────────────
 async def cmd_unreported(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         return
-    try:
-        if update.effective_chat.type in ("group", "supergroup"):
-            await update.message.delete()
-    except:
-        pass
     members = get_members()
     reported = get_reported_ids()
     unreported = [m["name"] for m in members if str(m["telegram_id"]) not in reported]
