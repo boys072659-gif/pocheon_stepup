@@ -171,15 +171,16 @@ async def send_to_group(bot, text, keyboard=None):
     await bot.send_message(**kwargs)
 
 # ── Mini App 버튼 ─────────────────────────────────────────
-def make_miniapp_keyboard(chat_type: str = "group"):
-    """Mini App 버튼은 그룹에서만 작동 (DM이면 None 반환)"""
+def make_miniapp_keyboard(chat_type: str = "any"):
+    """Mini App 버튼 생성 - 모든 채팅 타입에서 시도"""
     if not MINIAPP_URL:
         return None
-    if chat_type not in ("group", "supergroup"):
+    try:
+        return InlineKeyboardMarkup([[
+            InlineKeyboardButton("📋 일일보고 작성하기", web_app=WebAppInfo(url=MINIAPP_URL + "/miniapp.html"))
+        ]])
+    except:
         return None
-    return InlineKeyboardMarkup([[
-        InlineKeyboardButton("📋 일일보고 작성하기", web_app=WebAppInfo(url=MINIAPP_URL + "/miniapp.html"))
-    ]])
 
 # ── 명령어 핸들러 ─────────────────────────────────────────
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -237,11 +238,20 @@ async def cmd_form(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     name = (user.last_name or "") + (user.first_name or user.username or "이름없음")
     today = now.strftime("%Y년 %m월 %d일")
-    await update.message.reply_text(
-        f"📋 <b>{today} 일일보고</b>\n\n"
-        f"{name}님, 아래 버튼을 눌러 보고를 작성해주세요 💙",
-        parse_mode="HTML", reply_markup=kb
-    )
+    try:
+        await update.message.reply_text(
+            f"📋 <b>{today} 일일보고</b>\n\n"
+            f"{name}님, 아래 버튼을 눌러 보고를 작성해주세요 💙",
+            parse_mode="HTML", reply_markup=kb
+        )
+    except Exception:
+        # 버튼 전송 실패 시 링크로 대체
+        await update.message.reply_text(
+            f"📋 <b>{today} 일일보고</b>\n\n"
+            f"{name}님, 아래 링크로 보고해주세요 💙\n"
+            f"👉 {MINIAPP_URL}/miniapp.html",
+            parse_mode="HTML"
+        )
 
 async def cmd_register(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
