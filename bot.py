@@ -53,6 +53,24 @@ def get_topic_id():
     val = get_setting("topic_id")
     return int(val) if val and str(val).strip() else None
 
+def get_week_start():
+    val = get_setting("week_start", "1")
+    try:
+        return int(val)
+    except:
+        return 1  # 기본 월요일
+
+def get_week_range(date_obj, week_start):
+    """주의 시작일과 끝일 반환"""
+    dow = date_obj.weekday()  # 0=월 6=일
+    # JS와 맞추기 위해 변환 (0=일요일 기준)
+    js_dow = (dow + 1) % 7
+    diff = (js_dow - week_start + 7) % 7
+    from datetime import timedelta
+    start = date_obj.date() - timedelta(days=diff) if hasattr(date_obj, 'date') else date_obj - timedelta(days=diff)
+    end = start + timedelta(days=6)
+    return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), end == (date_obj.date() if hasattr(date_obj,'date') else date_obj)
+
 def is_holiday(date_str):
     try:
         res = supabase.table("holidays").select("id").eq("date", date_str).execute()
@@ -187,6 +205,52 @@ def build_summary(date_str=None):
         lines.append("\n⚠️ <b>미보고</b>: " + ", ".join(unreported))
     return "\n".join(lines)
 
+# ── 주간 취합 메시지 ──────────────────────────────────────
+def build_weekly_summary(start_date, end_date):
+    res = supabase.table("reports").select("*").gte("report_date", start_date).lte("report_date", end_date).execute()
+    rows = [r for r in (res.data or []) if r.get("telegram_id", 0) != 0]
+    if not rows:
+        return f"📊 {start_date} ~ {end_date} 주간 보고 없음"
+
+    # 보고자 집계 (중복 제거)
+    reporter_days = {}
+    for r in rows:
+        tid = r["telegram_id"]
+        reporter_days[tid] = reporter_days.get(tid, 0) + 1
+    reporter_count = len(reporter_days)
+
+    lines = [
+        f"📊 <b>주간 합계 ({start_date} ~ {end_date})</b>\n",
+        f"👥 보고 인원: {reporter_count}명 / 총 {len(rows)}건 보고\n",
+        "─────────────────",
+        f"📌 발굴인도: <b>{sum(r.get('발굴건수',0) for r in rows)}건</b>",
+        f"📌 찾기인도: <b>{sum(r.get('찾기건수',0) for r in rows)}건</b>",
+        f"📌 합자: <b>{sum(r.get('합자건수',0) for r in rows)}건</b>",
+        f"📌 섭외인도: <b>{sum(r.get('섭외인도건수',0) for r in rows)}건</b>  |  "
+        f"섭외교사: <b>{sum(r.get('섭외교사건수',0) for r in rows)}건</b>",
+        f"📌 복음방인도: <b>{sum(r.get('복음방인도건수',0) for r in rows)}건</b>  |  "
+        f"복음방교사: <b>{sum(r.get('복음방교사건수',0) for r in rows)}건</b>",
+        "─────────────────",
+    ]
+
+    # 개인별 주간 합계
+    member_totals = {}
+    for r in rows:
+        tid = r["telegram_id"]
+        if tid not in member_totals:
+            member_totals[tid] = {"name": r["name"], "발굴":0, "찾기":0, "합자":0, "섭외":0, "복음방":0}
+        member_totals[tid]["발굴"] += r.get("발굴건수", 0)
+        member_totals[tid]["찾기"] += r.get("찾기건수", 0)
+        member_totals[tid]["합자"] += r.get("합자건수", 0)
+        member_totals[tid]["섭외"] += r.get("섭외인도건수", 0) + r.get("섭외교사건수", 0)
+        member_totals[tid]["복음방"] += r.get("복음방인도건수", 0) + r.get("복음방교사건수", 0)
+
+    lines.append("\n👤 <b>개인별 주간 합계</b>")
+    for v in member_totals.values():
+        lines.append(f"• {v['name']}  발굴{v['발굴']}/찾기{v['찾기']}/합자{v['합자']}/섭외{v['섭외']}/복음방{v['복음방']}")
+
+    return "\n".join(lines)
+
 # ── 그룹 전송 ─────────────────────────────────────────────
 async def send_to_group(bot, text):
     chat_id = get_group_chat_id()
@@ -310,11 +374,17 @@ async def job_final_summary(ctx: ContextTypes.DEFAULT_TYPE):
     now = datetime.now(KST)
     if not is_workday(now):
         return
+    # 일일 취합 발송
     await send_to_group(
         ctx.bot,
         "⏰ <b>보고 마감!</b> 9시 이후 보고는 내일 올려주세요!\n\n"
         + build_summary()
     )
+    # 주간 마지막 날이면 주간 합계 추가 발송
+    week_start = get_week_start()
+    start, end, is_last_day = get_week_range(now, week_start)
+    if is_last_day:
+        await send_to_group(ctx.bot, build_weekly_summary(start, end))
 
 # ── 메인 ─────────────────────────────────────────────────
 def main():

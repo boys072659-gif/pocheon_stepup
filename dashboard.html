@@ -22,7 +22,6 @@
   --success: #10B981;
   --warning: #F59E0B;
   --danger: #EF4444;
-  --gold: #F59E0B;
   --radius: 12px;
   --shadow: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
@@ -35,12 +34,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   display: flex; align-items: center; justify-content: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
+  padding: 16px;
 }
 .login-box {
   background: #fff;
   border-radius: 24px;
-  padding: 48px 40px;
-  width: 360px;
+  padding: 40px 32px;
+  width: 100%; max-width: 360px;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
@@ -51,9 +51,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   display: flex; align-items: center; justify-content: center;
   font-size: 1.8rem;
   margin: 0 auto 16px;
-  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
 }
-.login-title { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.login-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
 .login-sub { font-size: 0.8rem; color: var(--text3); margin-bottom: 32px; }
 .pin-display { display: flex; gap: 14px; justify-content: center; margin-bottom: 28px; }
 .pin-dot {
@@ -67,44 +66,58 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px;
   font-size: 1.1rem; font-weight: 600; cursor: pointer;
-  transition: all 0.15s; color: var(--text);
-  font-family: inherit;
+  transition: all 0.15s; color: var(--text); font-family: inherit;
 }
 .key:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 .key:active { transform: scale(0.94); }
 .key.del { font-size: 0.85rem; color: var(--text3); }
 .key.empty { visibility: hidden; }
-.login-error { color: var(--danger); font-size: 0.78rem; margin-top: 14px; min-height: 18px; font-weight: 500; }
+.login-error { color: var(--danger); font-size: 0.78rem; margin-top: 14px; min-height: 18px; }
 
 /* 대시보드 */
 #dashboard { display: none; }
 
-/* 사이드바 레이아웃 */
-.layout { display: flex; min-height: 100vh; }
+/* 모바일 햄버거 */
+.mobile-header {
+  display: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 60;
+}
+.hamburger {
+  background: var(--surface2); border: 1px solid var(--border);
+  width: 36px; height: 36px; border-radius: 10px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.mobile-title { font-size: 0.95rem; font-weight: 700; }
 
 /* 사이드바 */
+.layout { display: flex; min-height: 100vh; }
 .sidebar {
   width: 220px; flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
-  position: fixed; left: 0; top: 0; bottom: 0;
-  z-index: 50;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 50;
+  transition: transform 0.3s;
 }
 .sidebar-header {
   padding: 20px 16px;
   border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
 }
-.sidebar-logo {
-  display: flex; align-items: center; gap: 10px;
-}
+.sidebar-logo { display: flex; align-items: center; gap: 10px; }
 .sidebar-logo-icon {
   width: 34px; height: 34px; background: var(--primary);
   border-radius: 10px; display: flex; align-items: center;
   justify-content: center; font-size: 1rem;
 }
-.sidebar-logo-text { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.sidebar-logo-text { font-size: 0.9rem; font-weight: 700; }
 .sidebar-logo-sub { font-size: 0.68rem; color: var(--text3); }
+.sidebar-close { display: none; font-size: 1.3rem; cursor: pointer; color: var(--text3); }
 
 .nav { padding: 12px 8px; flex: 1; }
 .nav-item {
@@ -118,134 +131,152 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
 .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
 
-.sidebar-footer {
-  padding: 12px 8px;
-  border-top: 1px solid var(--border);
-}
+.sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
 .logout-btn {
   display: flex; align-items: center; gap: 8px;
   width: 100%; padding: 9px 12px;
   background: transparent; border: 1px solid var(--border);
   border-radius: 10px; cursor: pointer;
   color: var(--text3); font-size: 0.8rem; font-family: inherit;
-  transition: all 0.15s;
 }
 .logout-btn:hover { border-color: var(--danger); color: var(--danger); background: #FEF2F2; }
 
+.overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); z-index: 49;
+}
+
 /* 메인 */
 .main-wrap { margin-left: 220px; flex: 1; }
-
-/* 상단바 */
 .topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  height: 56px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 56px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 40;
 }
-.topbar-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.topbar-title { font-size: 0.95rem; font-weight: 700; }
 .topbar-date {
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 8px; padding: 4px 12px;
   font-size: 0.78rem; color: var(--text2);
 }
-
-/* 컨텐츠 */
-.content { padding: 24px; }
+.content { padding: 20px; }
 
 /* 날짜 컨트롤 */
-.date-control {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
-}
-.date-input {
+.controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+.date-input, .text-input {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: 8px 14px;
   color: var(--text); font-size: 0.85rem; font-family: inherit;
-  outline: none; cursor: pointer;
+  outline: none;
 }
-.date-input:focus { border-color: var(--primary); }
+.date-input:focus, .text-input:focus { border-color: var(--primary); }
 .btn {
   background: var(--primary); border: none;
   border-radius: 10px; padding: 8px 18px;
   color: #fff; font-size: 0.82rem; font-family: inherit;
-  font-weight: 600; cursor: pointer; transition: background 0.2s;
+  font-weight: 600; cursor: pointer;
 }
 .btn:hover { background: var(--primary-dark); }
-.btn-outline {
-  background: transparent; border: 1px solid var(--border);
-  color: var(--text2);
-}
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
 .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-.btn-danger { background: var(--danger); }
-.btn-danger:hover { background: #DC2626; }
+
+/* 모드 토글 */
+.mode-tabs {
+  display: inline-flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+}
+.mode-tab {
+  padding: 6px 16px; border-radius: 8px;
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; color: var(--text3);
+  transition: all 0.15s;
+}
+.mode-tab.active { background: var(--primary); color: #fff; }
 
 /* 통계 카드 */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; margin-bottom: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  box-shadow: var(--shadow);
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.2s;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+  transition: all 0.2s; cursor: pointer;
 }
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.stat-card-accent {
-  position: absolute; top: 0; left: 0;
-  width: 3px; height: 100%;
-  background: var(--accent, var(--primary));
-}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--primary); }
+.stat-card-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent, var(--primary)); }
 .stat-icon {
   width: 36px; height: 36px;
   background: var(--accent-light, var(--primary-light));
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
   font-size: 1rem; margin-bottom: 10px;
 }
 .stat-label { font-size: 0.72rem; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
-.stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text); line-height: 1; }
+.stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1; }
 .stat-unit { font-size: 0.8rem; font-weight: 400; color: var(--text3); margin-left: 2px; }
 
-/* 그리드 */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } .sidebar { display: none; } .main-wrap { margin-left: 0; } }
+/* 모달 */
+.modal-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 16px;
+  width: 100%; max-width: 480px; max-height: 80vh;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-title { font-size: 1rem; font-weight: 700; }
+.modal-close {
+  background: var(--surface2); border: 1px solid var(--border);
+  width: 30px; height: 30px; border-radius: 8px;
+  cursor: pointer; font-size: 0.9rem;
+}
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.detail-item {
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.detail-item:last-child { border-bottom: none; }
+.detail-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+.detail-targets { font-size: 0.82rem; color: var(--text2); }
+.detail-targets b { color: var(--primary); }
 
 /* 카드 */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
 }
 .card-header {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
 }
 .card-title { font-size: 0.82rem; font-weight: 700; color: var(--text2); }
 .card-body { padding: 16px 18px; }
 
-/* 보고자 리스트 */
 .reporter-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 0; border-bottom: 1px solid var(--border);
 }
 .reporter-item:last-child { border-bottom: none; }
-.reporter-name { font-size: 0.88rem; font-weight: 600; color: var(--text); }
-.reporter-time { font-size: 0.72rem; color: var(--text3); margin-top: 1px; }
+.reporter-name { font-size: 0.88rem; font-weight: 600; }
+.reporter-time { font-size: 0.72rem; color: var(--text3); }
 .badge {
   padding: 3px 10px; border-radius: 20px;
   font-size: 0.7rem; font-weight: 700;
 }
 .badge-success { background: #ECFDF5; color: var(--success); }
-.badge-danger { background: #FEF2F2; color: var(--danger); }
 .badge-primary { background: var(--primary-light); color: var(--primary); }
 
-/* 미보고 */
 .unreported-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
   padding: 5px 12px; border-radius: 20px;
@@ -256,27 +287,24 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* 설정 */
 .setting-group {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  margin-bottom: 14px; box-shadow: var(--shadow);
 }
-.setting-label { font-size: 0.78rem; font-weight: 700; color: var(--text2); margin-bottom: 10px; letter-spacing: 0.3px; }
-.setting-row { display: flex; gap: 10px; align-items: center; }
+.setting-label { font-size: 0.78rem; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.setting-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .setting-input {
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 10px; padding: 9px 14px;
   color: var(--text); font-size: 0.85rem; font-family: inherit;
-  outline: none; flex: 1;
+  outline: none; flex: 1; min-width: 120px;
 }
 .setting-input:focus { border-color: var(--primary); background: #fff; }
 .setting-desc { font-size: 0.72rem; color: var(--text3); margin-top: 6px; }
 .setting-current { font-size: 0.75rem; color: var(--success); margin-top: 5px; font-weight: 500; }
 
 /* 캘린더 */
-.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .cal-day-label { text-align: center; font-size: 0.65rem; color: var(--text3); padding-bottom: 5px; font-weight: 600; }
 .cal-day {
   aspect-ratio: 1; border-radius: 8px;
@@ -286,12 +314,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   cursor: pointer; transition: all 0.15s;
   border: 1.5px solid transparent;
 }
-.cal-day:hover:not(.sunday):not(.empty) { border-color: var(--primary); background: var(--primary-light); }
+.cal-day:hover:not(.sunday):not(.empty) { border-color: var(--primary); }
 .cal-day.today { border-color: var(--primary); color: var(--primary); font-weight: 700; }
 .cal-day.holiday { background: #FEF2F2; color: var(--danger); border-color: #FECACA; }
 .cal-day.sunday { color: var(--danger); opacity: 0.4; cursor: default; }
 .cal-day.empty { background: transparent; cursor: default; border: none; }
-.cal-legend { display: flex; gap: 14px; margin-bottom: 12px; }
+.cal-legend { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
 .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text3); }
 .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
 
@@ -300,21 +328,32 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: 9px 14px;
   color: var(--text); font-size: 0.85rem; font-family: inherit;
-  outline: none; width: 240px; margin-bottom: 20px;
-  cursor: pointer;
+  outline: none; max-width: 240px; width: 100%;
+  margin-bottom: 20px; cursor: pointer;
 }
 .perf-bar-wrap { margin-bottom: 12px; }
 .perf-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 5px; }
-.perf-bar-label span:first-child { color: var(--text2); font-weight: 500; }
-.perf-bar-label span:last-child { color: var(--text); font-weight: 700; }
 .perf-bar-track { height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
-.perf-bar-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.6s ease; }
+.perf-bar-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.6s; }
 
-.member-cal { }
-.section-title { font-size: 0.72rem; font-weight: 700; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px; margin-top: 24px; }
-
+.section-title { font-size: 0.72rem; font-weight: 700; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin: 24px 0 14px; }
 .loading { text-align: center; color: var(--text3); padding: 40px; font-size: 0.88rem; }
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 0.88rem; }
+
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-close { display: block; }
+  .main-wrap { margin-left: 0; }
+  .mobile-header { display: flex; }
+  .topbar { display: none; }
+  .overlay.show { display: block; }
+}
 </style>
 </head>
 <body>
@@ -349,9 +388,18 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 <!-- 대시보드 -->
 <div id="dashboard">
+
+  <!-- 모바일 헤더 -->
+  <div class="mobile-header">
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="mobile-title" id="mobile-title">일일 통계</div>
+    <div style="width:36px"></div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
   <div class="layout">
-    <!-- 사이드바 -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <div class="sidebar-logo-icon">💙</div>
@@ -360,15 +408,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
             <div class="sidebar-logo-sub">관리자 대시보드</div>
           </div>
         </div>
+        <div class="sidebar-close" onclick="toggleMenu()">✕</div>
       </div>
       <nav class="nav">
-        <div class="nav-item active" onclick="switchTab('daily',this)" id="nav-daily">
-          <span class="nav-icon">📊</span> 일일 통계
+        <div class="nav-item active" onclick="switchTab('stats',this)">
+          <span class="nav-icon">📊</span> 통계
         </div>
-        <div class="nav-item" onclick="switchTab('member',this)" id="nav-member">
+        <div class="nav-item" onclick="switchTab('member',this)">
           <span class="nav-icon">👤</span> 개인 실적
         </div>
-        <div class="nav-item" onclick="switchTab('settings',this)" id="nav-settings">
+        <div class="nav-item" onclick="switchTab('settings',this)">
           <span class="nav-icon">⚙️</span> 설정
         </div>
       </nav>
@@ -377,20 +426,25 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       </div>
     </div>
 
-    <!-- 메인 -->
     <div class="main-wrap">
       <div class="topbar">
-        <div class="topbar-title" id="topbar-title">일일 통계</div>
+        <div class="topbar-title" id="topbar-title">통계</div>
         <div class="topbar-date" id="today-badge"></div>
       </div>
 
-      <!-- 일일 통계 -->
-      <div id="tab-daily" class="content">
-        <div class="date-control">
+      <!-- 통계 -->
+      <div id="tab-stats" class="content">
+        <div class="controls">
+          <div class="mode-tabs">
+            <div class="mode-tab active" id="mode-daily" onclick="setMode('daily')">일일</div>
+            <div class="mode-tab" id="mode-weekly" onclick="setMode('weekly')">주간</div>
+          </div>
           <input type="date" class="date-input" id="date-picker">
-          <button class="btn" onclick="loadDaily()">조회</button>
+          <button class="btn" onclick="loadStats()">조회</button>
         </div>
+
         <div class="stats-grid" id="stats-grid"><div class="loading">로딩 중...</div></div>
+
         <div class="two-col">
           <div class="card">
             <div class="card-header"><div class="card-title">📈 항목별 현황</div></div>
@@ -401,9 +455,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
             <div class="card-body" id="reporter-list"><div class="loading">로딩 중...</div></div>
           </div>
         </div>
+
         <div class="card">
           <div class="card-header"><div class="card-title">⚠️ 미보고 인원</div></div>
-          <div class="card-body"><div class="unreported-list" id="unreported-list"><span class="loading">로딩 중...</span></div></div>
+          <div class="card-body"><div class="unreported-list" id="unreported-list"></div></div>
         </div>
       </div>
 
@@ -419,40 +474,65 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <div id="tab-settings" class="content" style="display:none">
 
         <div class="section-title">📡 봇 전송 설정</div>
-
         <div class="setting-group">
           <div class="setting-label">그룹 채팅 ID</div>
           <div class="setting-row">
             <input type="text" class="setting-input" id="inp-group-chat-id" placeholder="-1001234567890">
             <button class="btn" onclick="saveSetting('group_chat_id','inp-group-chat-id','cur-group-chat-id')">저장</button>
           </div>
-          <div class="setting-desc">독려/취합 메시지를 보낼 그룹의 chat_id (음수)</div>
           <div class="setting-current" id="cur-group-chat-id"></div>
         </div>
-
         <div class="setting-group">
           <div class="setting-label">토픽 ID (선택)</div>
           <div class="setting-row">
-            <input type="text" class="setting-input" id="inp-topic-id" placeholder="토픽 없으면 비워두세요">
+            <input type="text" class="setting-input" id="inp-topic-id" placeholder="비워두면 메인 채팅">
             <button class="btn" onclick="saveSetting('topic_id','inp-topic-id','cur-topic-id')">저장</button>
             <button class="btn btn-outline" onclick="clearSetting('topic_id','inp-topic-id','cur-topic-id')">초기화</button>
           </div>
-          <div class="setting-desc">그룹 내 특정 토픽으로 보낼 경우 message_thread_id 입력</div>
           <div class="setting-current" id="cur-topic-id"></div>
+        </div>
+
+        <div class="section-title">📅 주간 설정</div>
+        <div class="setting-group">
+          <div class="setting-label">주간 시작 요일</div>
+          <div class="setting-row">
+            <select class="setting-input" id="inp-week-start">
+              <option value="0">일요일</option>
+              <option value="1">월요일</option>
+              <option value="2">화요일</option>
+              <option value="3">수요일</option>
+              <option value="4">목요일</option>
+              <option value="5">금요일</option>
+              <option value="6">토요일</option>
+            </select>
+            <button class="btn" onclick="saveWeekStart()">저장</button>
+          </div>
+          <div class="setting-desc">주간 합계는 [시작 요일 ~ 시작 요일 전날] 7일 단위로 계산됩니다</div>
+          <div class="setting-current" id="cur-week-start"></div>
         </div>
 
         <div class="section-title">🗓️ 휴무일 설정</div>
         <div class="setting-group">
           <div class="setting-label">이번달 휴무일 (클릭으로 토글)</div>
-          <div class="setting-desc" style="margin-bottom:14px">빨간 날짜는 알람이 발송되지 않습니다</div>
-          <div class="cal-legend">
-            <div class="cal-legend-item"><div class="legend-dot" style="background:var(--primary);border:1.5px solid var(--primary)"></div> 오늘</div>
-            <div class="cal-legend-item"><div class="legend-dot" style="background:#FEF2F2;border:1px solid #FECACA"></div> 휴무일</div>
+          <div class="cal-legend" style="margin: 10px 0">
+            <div class="cal-legend-item"><div class="legend-dot" style="background: var(--primary-light); border:1.5px solid var(--primary)"></div> 오늘</div>
+            <div class="cal-legend-item"><div class="legend-dot" style="background: #FEF2F2; border:1px solid #FECACA"></div> 휴무일</div>
           </div>
           <div class="cal-grid" id="holiday-cal"></div>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">상세 정보</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
@@ -463,36 +543,30 @@ const PASSWORD = '0688';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+let currentMode = 'daily';
+let currentRows = [];
+
 // ── 로그인 ────────────────────────────────────────────────
 let pin = '';
-function pressKey(k) {
-  if (pin.length >= 4) return;
-  pin += k;
-  updateDots();
-  if (pin.length === 4) setTimeout(checkPin, 100);
-}
-function deleteKey() {
-  pin = pin.slice(0,-1); updateDots();
-  document.getElementById('login-error').textContent = '';
-}
+function pressKey(k) { if (pin.length>=4) return; pin+=k; updateDots(); if (pin.length===4) setTimeout(checkPin,100); }
+function deleteKey() { pin=pin.slice(0,-1); updateDots(); document.getElementById('login-error').textContent=''; }
 function updateDots(err=false) {
   for (let i=0;i<4;i++) {
-    const d = document.getElementById('d'+i);
-    d.className = 'pin-dot' + (i<pin.length ? (err?' error':' filled') : '');
+    document.getElementById('d'+i).className = 'pin-dot' + (i<pin.length ? (err?' error':' filled') : '');
   }
 }
 function checkPin() {
-  if (pin === PASSWORD) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
+  if (pin===PASSWORD) {
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
     initDashboard();
   } else {
     updateDots(true);
-    document.getElementById('login-error').textContent = '비밀번호가 틀렸습니다';
+    document.getElementById('login-error').textContent='비밀번호가 틀렸습니다';
     setTimeout(()=>{pin='';updateDots();document.getElementById('login-error').textContent='';},1000);
   }
 }
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', e=>{
   if (document.getElementById('login-screen').style.display==='none') return;
   if (e.key>='0'&&e.key<='9') pressKey(e.key);
   else if (e.key==='Backspace') deleteKey();
@@ -504,56 +578,110 @@ function logout() {
   document.getElementById('login-screen').style.display='flex';
 }
 
-// ── 탭 ───────────────────────────────────────────────────
-const tabTitles = { daily:'일일 통계', member:'개인 실적', settings:'설정' };
+// ── 메뉴/탭 ───────────────────────────────────────────────
+function toggleMenu() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+const TAB_TITLES = { stats: currentMode==='daily'?'일일 통계':'주간 통계', member:'개인 실적', settings:'설정' };
 function switchTab(name, el) {
   document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['daily','member','settings'].forEach(n=>{
+  ['stats','member','settings'].forEach(n=>{
     document.getElementById('tab-'+n).style.display = n===name?'block':'none';
   });
-  document.getElementById('topbar-title').textContent = tabTitles[name];
+  const title = name==='stats' ? (currentMode==='daily'?'일일 통계':'주간 통계') : (name==='member'?'개인 실적':'설정');
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('mobile-title').textContent = title;
   if (name==='member') loadMemberList();
   if (name==='settings') loadSettings();
+  if (window.innerWidth <= 900) toggleMenu();
 }
 
-// ── 초기화 ────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-daily').classList.toggle('active', mode==='daily');
+  document.getElementById('mode-weekly').classList.toggle('active', mode==='weekly');
+  const t = mode==='daily'?'일일 통계':'주간 통계';
+  document.getElementById('topbar-title').textContent = t;
+  document.getElementById('mobile-title').textContent = t;
+  loadStats();
+}
+
 let barChart = null;
 function initDashboard() {
   const now = new Date();
   document.getElementById('today-badge').textContent =
     now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   document.getElementById('date-picker').value = now.toISOString().slice(0,10);
-  loadDaily();
+  loadStats();
 }
 
-// ── 일일 통계 ─────────────────────────────────────────────
-async function loadDaily() {
+// ── 주간 시작 요일 ────────────────────────────────────────
+async function getWeekStart() {
+  const { data } = await db.from('settings').select('value').eq('key','week_start').single();
+  return data ? parseInt(data.value) : 1;  // 기본 월요일
+}
+
+function getWeekRange(dateStr, weekStart) {
+  const d = new Date(dateStr);
+  const dow = d.getDay();
+  const diff = (dow - weekStart + 7) % 7;
+  const start = new Date(d); start.setDate(d.getDate() - diff);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  return [start.toISOString().slice(0,10), end.toISOString().slice(0,10)];
+}
+
+// ── 통계 로드 ─────────────────────────────────────────────
+async function loadStats() {
   const date = document.getElementById('date-picker').value;
   if (!date) return;
-  const [{data:reports},{data:members}] = await Promise.all([
-    db.from('reports').select('*').eq('report_date',date),
-    db.from('members').select('*').eq('active',true)
-  ]);
-  renderStats(reports||[]);
-  renderReporters(reports||[]);
-  renderUnreported(reports||[], members||[]);
-  renderBarChart(reports||[]);
+
+  let reports;
+  if (currentMode === 'daily') {
+    const { data } = await db.from('reports').select('*').eq('report_date', date);
+    reports = data || [];
+  } else {
+    const weekStart = await getWeekStart();
+    const [start, end] = getWeekRange(date, weekStart);
+    const { data } = await db.from('reports').select('*').gte('report_date', start).lte('report_date', end);
+    reports = data || [];
+  }
+
+  const { data: members } = await db.from('members').select('*').eq('active', true);
+  currentRows = reports.filter(r => r.telegram_id !== 0);
+
+  renderStats(currentRows);
+  renderReporters(currentRows);
+  renderUnreported(currentRows, members || []);
+  renderBarChart(currentRows);
 }
 
-function sum(arr,key){return arr.reduce((s,r)=>s+(r[key]||0),0);}
+function sum(arr, key) { return arr.reduce((s,r)=>s+(r[key]||0),0); }
+
+function collectNames(rows, nameKey) {
+  const all = [];
+  rows.forEach(r => {
+    const names = (r[nameKey]||'').split(/[,，、]/).map(n=>n.trim()).filter(Boolean);
+    names.forEach(n => all.push({ reporter: r.name, target: n, date: r.report_date }));
+  });
+  return all;
+}
 
 function renderStats(rows) {
   const cards = [
-    {label:'보고 인원',value:rows.length,unit:'명',accent:'#3B82F6',alight:'#EFF6FF',icon:'👥'},
-    {label:'발굴 인도',value:sum(rows,'발굴건수'),unit:'건',accent:'#10B981',alight:'#ECFDF5',icon:'🌱'},
-    {label:'찾기 인도',value:sum(rows,'찾기건수'),unit:'건',accent:'#6366F1',alight:'#EEF2FF',icon:'🔍'},
-    {label:'합자',value:sum(rows,'합자건수'),unit:'건',accent:'#F59E0B',alight:'#FFFBEB',icon:'⭐'},
-    {label:'섭외 합계',value:sum(rows,'섭외인도건수')+sum(rows,'섭외교사건수'),unit:'건',accent:'#F97316',alight:'#FFF7ED',icon:'🤝'},
-    {label:'복음방 합계',value:sum(rows,'복음방인도건수')+sum(rows,'복음방교사건수'),unit:'건',accent:'#EC4899',alight:'#FDF2F8',icon:'🏠'},
+    { key:'total', label:'보고 인원', value:rows.length, unit:'명', accent:'#3B82F6', alight:'#EFF6FF', icon:'👥' },
+    { key:'발굴', label:'발굴 인도', value:sum(rows,'발굴건수'), unit:'건', accent:'#10B981', alight:'#ECFDF5', icon:'🌱' },
+    { key:'찾기', label:'찾기 인도', value:sum(rows,'찾기건수'), unit:'건', accent:'#6366F1', alight:'#EEF2FF', icon:'🔍' },
+    { key:'합자', label:'합자', value:sum(rows,'합자건수'), unit:'건', accent:'#F59E0B', alight:'#FFFBEB', icon:'⭐' },
+    { key:'섭외인도', label:'섭외 인도', value:sum(rows,'섭외인도건수'), unit:'건', accent:'#F97316', alight:'#FFF7ED', icon:'🤝' },
+    { key:'섭외교사', label:'섭외 교사', value:sum(rows,'섭외교사건수'), unit:'건', accent:'#EF4444', alight:'#FEF2F2', icon:'👨‍🏫' },
+    { key:'복음방인도', label:'복음방 인도', value:sum(rows,'복음방인도건수'), unit:'건', accent:'#EC4899', alight:'#FDF2F8', icon:'🏠' },
+    { key:'복음방교사', label:'복음방 교사', value:sum(rows,'복음방교사건수'), unit:'건', accent:'#8B5CF6', alight:'#F5F3FF', icon:'📖' },
   ];
   document.getElementById('stats-grid').innerHTML = cards.map(c=>`
-    <div class="stat-card" style="--accent:${c.accent};--accent-light:${c.alight}">
+    <div class="stat-card" style="--accent:${c.accent};--accent-light:${c.alight}" onclick="showDetail('${c.key}','${c.label}')">
       <div class="stat-card-accent"></div>
       <div class="stat-icon">${c.icon}</div>
       <div class="stat-label">${c.label}</div>
@@ -561,116 +689,168 @@ function renderStats(rows) {
     </div>`).join('');
 }
 
+function showDetail(key, label) {
+  const modal = document.getElementById('detail-modal');
+  const body = document.getElementById('modal-body');
+  document.getElementById('modal-title').textContent = `${label} 상세`;
+
+  if (key === 'total') {
+    const html = currentRows.map(r => `
+      <div class="detail-item">
+        <div class="detail-name">${r.name}</div>
+        <div class="detail-targets">
+          ${r.report_date} ${r.report_time||''} ·
+          발굴 ${r.발굴건수||0} / 찾기 ${r.찾기건수||0} / 합자 ${r.합자건수||0} /
+          섭외 ${(r.섭외인도건수||0)+(r.섭외교사건수||0)} / 복음방 ${(r.복음방인도건수||0)+(r.복음방교사건수||0)}
+        </div>
+      </div>`).join('');
+    body.innerHTML = html || '<div class="empty-state">데이터 없음</div>';
+  } else {
+    const nameKey = key + '이름';
+    const countKey = key + '건수';
+    const items = currentRows.filter(r => (r[countKey]||0) > 0);
+    if (!items.length) {
+      body.innerHTML = '<div class="empty-state">해당 항목 보고 없음</div>';
+    } else {
+      const html = items.map(r => {
+        const names = (r[nameKey]||'').trim() || '(이름 미기재)';
+        return `<div class="detail-item">
+          <div class="detail-name">${r.name} <span style="color:var(--text3);font-weight:400;font-size:0.8rem">· ${r.report_date}</span></div>
+          <div class="detail-targets"><b>${r[countKey]}건</b> · ${names}</div>
+        </div>`;
+      }).join('');
+      body.innerHTML = html;
+    }
+  }
+  modal.classList.add('show');
+}
+
+function closeModal() { document.getElementById('detail-modal').classList.remove('show'); }
+
 function renderReporters(reports) {
   if (!reports.length) {
     document.getElementById('reporter-list').innerHTML = '<div class="empty-state">📭 보고 없음</div>';
     return;
   }
-  document.getElementById('reporter-list').innerHTML = reports.map(r=>`
+  // 주간 모드는 같은 사람 합쳐서 표시
+  let display = reports;
+  if (currentMode === 'weekly') {
+    const map = {};
+    reports.forEach(r => {
+      if (!map[r.telegram_id]) map[r.telegram_id] = { name: r.name, count: 0 };
+      map[r.telegram_id].count++;
+    });
+    display = Object.values(map).map(v => ({ name: v.name, report_time: `${v.count}일 보고` }));
+  }
+  document.getElementById('reporter-list').innerHTML = display.map(r=>`
     <div class="reporter-item">
       <div>
         <div class="reporter-name">${r.name}</div>
-        <div class="reporter-time">${r.report_time||'-'} 보고 완료</div>
+        <div class="reporter-time">${r.report_time||'-'}</div>
       </div>
-      <span class="badge badge-success">✓ 완료</span>
+      <span class="badge badge-success">✓</span>
     </div>`).join('');
 }
 
 function renderUnreported(reports, members) {
+  if (currentMode === 'weekly') {
+    document.getElementById('unreported-list').innerHTML = '<span style="color:var(--text3);font-size:0.85rem">주간 통계는 미보고 표시 생략</span>';
+    return;
+  }
   const ids = new Set(reports.map(r=>String(r.telegram_id)));
   const un = members.filter(m=>!ids.has(String(m.telegram_id)));
   const el = document.getElementById('unreported-list');
-  if (!un.length) {
-    el.innerHTML = '<span class="chip chip-success">✅ 전원 보고 완료!</span>';
-  } else {
-    el.innerHTML = un.map(m=>`<span class="chip chip-danger">${m.name}</span>`).join('');
-  }
+  el.innerHTML = un.length ? un.map(m=>`<span class="chip chip-danger">${m.name}</span>`).join('')
+    : '<span class="chip chip-success">✅ 전원 보고 완료!</span>';
 }
 
 function renderBarChart(rows) {
-  const labels=['발굴인도','찾기인도','합자','섭외인도','섭외교사','복음방인도','복음방교사'];
-  const keys=['발굴건수','찾기건수','합자건수','섭외인도건수','섭외교사건수','복음방인도건수','복음방교사건수'];
-  const colors=['#3B82F6','#6366F1','#F59E0B','#F97316','#EF4444','#EC4899','#8B5CF6'];
+  const labels = ['발굴인도','찾기인도','합자','섭외인도','섭외교사','복음방인도','복음방교사'];
+  const keys = ['발굴건수','찾기건수','합자건수','섭외인도건수','섭외교사건수','복음방인도건수','복음방교사건수'];
+  const colors = ['#10B981','#6366F1','#F59E0B','#F97316','#EF4444','#EC4899','#8B5CF6'];
   const ctx = document.getElementById('bar-chart').getContext('2d');
   if (barChart) barChart.destroy();
-  barChart = new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[{data:keys.map(k=>sum(rows,k)),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{color:'#94A3B8',font:{size:10,family:'Noto Sans KR'}},grid:{display:false}},
-        y:{ticks:{color:'#94A3B8',stepSize:1},grid:{color:'#F1F5F9'},border:{display:false}}
-      }
-    }
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: keys.map(k=>sum(rows,k)), backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { x:{ ticks:{color:'#94A3B8',font:{size:10}}, grid:{display:false}},
+                y:{ ticks:{color:'#94A3B8',stepSize:1}, grid:{color:'#F1F5F9'}, border:{display:false}}}}
   });
 }
 
 // ── 개인 실적 ─────────────────────────────────────────────
 async function loadMemberList() {
-  const {data:members} = await db.from('members').select('*').eq('active',true);
-  const sel = document.getElementById('member-select');
-  sel.innerHTML = '<option value="">구성원 선택</option>' +
+  const { data: members } = await db.from('members').select('*').eq('active', true);
+  document.getElementById('member-select').innerHTML = '<option value="">구성원 선택</option>' +
     (members||[]).map(m=>`<option value="${m.telegram_id}">${m.name}</option>`).join('');
 }
 
 async function loadMember() {
   const tid = document.getElementById('member-select').value;
   if (!tid) return;
-  const {data:reports} = await db.from('reports').select('*').eq('telegram_id',tid).order('report_date',{ascending:false});
+  const { data: reports } = await db.from('reports').select('*')
+    .eq('telegram_id', tid).order('report_date',{ascending:false});
   if (!reports?.length) {
-    document.getElementById('member-content').innerHTML='<div class="empty-state">📭 보고 데이터 없음</div>';
+    document.getElementById('member-content').innerHTML = '<div class="empty-state">📭 보고 데이터 없음</div>';
     return;
   }
-  const name = reports[0].name;
 
-  const ITEMS=[
-    {label:'발굴인도',key:'발굴건수',color:'#10B981'},
-    {label:'찾기인도',key:'찾기건수',color:'#6366F1'},
-    {label:'합자',key:'합자건수',color:'#F59E0B'},
-    {label:'섭외인도',key:'섭외인도건수',color:'#F97316'},
-    {label:'섭외교사',key:'섭외교사건수',color:'#EF4444'},
-    {label:'복음방인도',key:'복음방인도건수',color:'#EC4899'},
-    {label:'복음방교사',key:'복음방교사건수',color:'#8B5CF6'},
+  const ITEMS = [
+    {label:'발굴인도', key:'발굴', color:'#10B981'},
+    {label:'찾기인도', key:'찾기', color:'#6366F1'},
+    {label:'합자', key:'합자', color:'#F59E0B'},
+    {label:'섭외인도', key:'섭외인도', color:'#F97316'},
+    {label:'섭외교사', key:'섭외교사', color:'#EF4444'},
+    {label:'복음방인도', key:'복음방인도', color:'#EC4899'},
+    {label:'복음방교사', key:'복음방교사', color:'#8B5CF6'},
   ];
-  const maxVal = Math.max(1,...ITEMS.map(i=>sum(reports,i.key)));
+  const maxVal = Math.max(1, ...ITEMS.map(i=>sum(reports, i.key+'건수')));
+
   const bars = ITEMS.map(i=>{
-    const v=sum(reports,i.key);
+    const v = sum(reports, i.key+'건수');
     return `<div class="perf-bar-wrap">
-      <div class="perf-bar-label"><span>${i.label}</span><span>${v}건</span></div>
+      <div class="perf-bar-label"><span style="color:var(--text2)">${i.label}</span><span style="font-weight:700">${v}건</span></div>
       <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${Math.round(v/maxVal*100)}%;background:${i.color}"></div></div>
     </div>`;
   }).join('');
+
+  // 인도/섭외자 명단
+  const allTargets = ITEMS.map(i => {
+    const names = [];
+    reports.forEach(r => {
+      const ns = (r[i.key+'이름']||'').split(/[,，、]/).map(n=>n.trim()).filter(Boolean);
+      ns.forEach(n => names.push({ name: n, date: r.report_date }));
+    });
+    if (!names.length) return '';
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:0.78rem;font-weight:700;color:${i.color};margin-bottom:6px">${i.label} (${names.length}명)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${names.map(n=>`<span class="chip chip-success" style="font-size:0.75rem">${n.name}</span>`).join('')}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
 
   const recent = reports.slice(0,10).map(r=>`
     <div class="reporter-item">
       <div>
         <div class="reporter-name" style="font-size:0.85rem">${r.report_date}</div>
-        <div class="reporter-time">발굴${r.발굴건수||0} / 찾기${r.찾기건수||0} / 합자${r.합자건수||0} / 섭외${r.섭외인도건수||0} / 복음방${r.복음방인도건수||0}</div>
+        <div class="reporter-time">발굴${r.발굴건수||0}/찾기${r.찾기건수||0}/합자${r.합자건수||0}/섭외${r.섭외인도건수||0}/복음방${r.복음방인도건수||0}</div>
       </div>
       <span class="badge badge-primary">${r.report_time||'-'}</span>
     </div>`).join('');
-
-  const cal = buildCalendar(reports);
 
   document.getElementById('member-content').innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <div style="width:40px;height:40px;background:var(--primary-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">👤</div>
       <div>
-        <div style="font-size:1rem;font-weight:700">${name}</div>
+        <div style="font-size:1rem;font-weight:700">${reports[0].name}</div>
         <div style="font-size:0.75rem;color:var(--text3)">총 ${reports.length}일 보고</div>
       </div>
     </div>
     <div class="two-col">
-      <div class="card">
-        <div class="card-header"><div class="card-title">📊 누적 실적</div></div>
-        <div class="card-body">${bars}</div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📅 이번달 현황</div></div>
-        <div class="card-body">${cal}</div>
-      </div>
+      <div class="card"><div class="card-header"><div class="card-title">📊 누적 실적</div></div><div class="card-body">${bars}</div></div>
+      <div class="card"><div class="card-header"><div class="card-title">🎯 인도/섭외 명단</div></div><div class="card-body">${allTargets || '<div class="empty-state">명단 없음</div>'}</div></div>
     </div>
     <div class="card" style="margin-top:16px">
       <div class="card-header"><div class="card-title">📋 최근 보고 이력</div></div>
@@ -678,30 +858,12 @@ async function loadMember() {
     </div>`;
 }
 
-function buildCalendar(reports) {
-  const now=new Date(); const year=now.getFullYear(); const month=now.getMonth();
-  const todayStr=now.toISOString().slice(0,10);
-  const prefix=`${year}-${String(month+1).padStart(2,'0')}`;
-  const reported=new Set(reports.filter(r=>r.report_date.startsWith(prefix)).map(r=>r.report_date));
-  const first=new Date(year,month,1).getDay();
-  const days=new Date(year,month+1,0).getDate();
-  let cells=['일','월','화','수','목','금','토'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
-  for(let i=0;i<first;i++) cells+=`<div class="cal-day empty"></div>`;
-  for(let d=1;d<=days;d++){
-    const ds=`${prefix}-${String(d).padStart(2,'0')}`;
-    const isToday=ds===todayStr;
-    const isRep=reported.has(ds);
-    const style=isRep?'background:#EFF6FF;color:#3B82F6;font-weight:700;border-color:#BFDBFE':'';
-    cells+=`<div class="cal-day${isToday?' today':''}" style="${style}">${d}</div>`;
-  }
-  return `<div class="cal-grid">${cells}</div>`;
-}
-
-// ── 설정 ─────────────────────────────────────────────────
+// ── 설정 ──────────────────────────────────────────────────
 async function loadSettings() {
-  const {data} = await db.from('settings').select('*');
+  const { data } = await db.from('settings').select('*');
   const map = {};
-  (data||[]).forEach(r=>{ map[r.key]=r.value; });
+  (data||[]).forEach(r=>{ map[r.key] = r.value; });
+
   if (map['group_chat_id']) {
     document.getElementById('inp-group-chat-id').value = map['group_chat_id'];
     document.getElementById('cur-group-chat-id').textContent = '현재: ' + map['group_chat_id'];
@@ -710,13 +872,19 @@ async function loadSettings() {
     document.getElementById('inp-topic-id').value = map['topic_id'];
     document.getElementById('cur-topic-id').textContent = '현재: ' + map['topic_id'];
   }
+
+  const ws = map['week_start'] || '1';
+  document.getElementById('inp-week-start').value = ws;
+  const dayNames = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  document.getElementById('cur-week-start').textContent = '현재: ' + dayNames[parseInt(ws)] + ' 시작';
+
   await loadHolidayCal();
 }
 
 async function saveSetting(key, inputId, curId) {
   const val = document.getElementById(inputId).value.trim();
   if (!val) return;
-  await db.from('settings').upsert({key, value: val}, {onConflict:'key'});
+  await db.from('settings').upsert({ key, value: val }, { onConflict: 'key' });
   document.getElementById(curId).textContent = '✅ 저장됨: ' + val;
   setTimeout(()=>{ document.getElementById(curId).textContent = '현재: ' + val; }, 2000);
 }
@@ -727,28 +895,37 @@ async function clearSetting(key, inputId, curId) {
   document.getElementById(curId).textContent = '초기화됨';
 }
 
-// ── 휴무일 ────────────────────────────────────────────────
+async function saveWeekStart() {
+  const val = document.getElementById('inp-week-start').value;
+  await db.from('settings').upsert({ key: 'week_start', value: val }, { onConflict: 'key' });
+  const dayNames = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  document.getElementById('cur-week-start').textContent = '✅ 저장됨: ' + dayNames[parseInt(val)] + ' 시작';
+  setTimeout(()=>{ document.getElementById('cur-week-start').textContent = '현재: ' + dayNames[parseInt(val)] + ' 시작'; }, 2000);
+}
+
 let holidayDates = new Set();
 async function loadHolidayCal() {
   const now = new Date();
   const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const {data} = await db.from('holidays').select('date').like('date', prefix+'%');
+  const { data } = await db.from('holidays').select('date').like('date', prefix+'%');
   holidayDates = new Set((data||[]).map(r=>r.date));
   renderHolidayCal(now.getFullYear(), now.getMonth());
 }
 
 function renderHolidayCal(year, month) {
   const todayStr = new Date().toISOString().slice(0,10);
-  const first = new Date(year,month,1).getDay();
-  const days = new Date(year,month+1,0).getDate();
+  const first = new Date(year, month, 1).getDay();
+  const days = new Date(year, month+1, 0).getDate();
   let cells = ['일','월','화','수','목','금','토'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
-  for(let i=0;i<first;i++) cells+=`<div class="cal-day empty"></div>`;
-  for(let d=1;d<=days;d++){
-    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dow=new Date(ds).getDay();
-    const isSun=dow===0, isHol=holidayDates.has(ds), isToday=ds===todayStr;
-    const cls=['cal-day',isToday?'today':'',isHol?'holiday':'',isSun?'sunday':''].filter(Boolean).join(' ');
-    cells+=`<div class="${cls}" id="cal-${ds}" ${isSun?'':` onclick="toggleHoliday('${ds}')"`}>${d}</div>`;
+  for (let i=0;i<first;i++) cells += `<div class="cal-day empty"></div>`;
+  for (let d=1;d<=days;d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(ds).getDay();
+    const isSun = dow===0;
+    const isHol = holidayDates.has(ds);
+    const isToday = ds===todayStr;
+    const cls = ['cal-day', isToday?'today':'', isHol?'holiday':'', isSun?'sunday':''].filter(Boolean).join(' ');
+    cells += `<div class="${cls}" id="cal-${ds}" ${isSun?'':`onclick="toggleHoliday('${ds}')"`}>${d}</div>`;
   }
   document.getElementById('holiday-cal').innerHTML = cells;
 }
@@ -759,7 +936,7 @@ async function toggleHoliday(ds) {
     holidayDates.delete(ds);
     document.getElementById('cal-'+ds).classList.remove('holiday');
   } else {
-    await db.from('holidays').insert({date: ds});
+    await db.from('holidays').insert({ date: ds });
     holidayDates.add(ds);
     document.getElementById('cal-'+ds).classList.add('holiday');
   }
