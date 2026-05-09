@@ -417,6 +417,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div class="nav-item" onclick="switchTab('member',this)">
           <span class="nav-icon">👤</span> 개인 실적
         </div>
+        <div class="nav-item" onclick="switchTab('final',this)">
+          <span class="nav-icon">🏆</span> 최종 집계
+        </div>
         <div class="nav-item" onclick="switchTab('settings',this)">
           <span class="nav-icon">⚙️</span> 설정
         </div>
@@ -470,6 +473,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div id="member-content"><div class="empty-state">👆 구성원을 선택해주세요</div></div>
       </div>
 
+      <!-- 최종 집계 -->
+      <div id="tab-final" class="content" style="display:none">
+        <div id="final-content">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
       <!-- 설정 -->
       <div id="tab-settings" class="content" style="display:none">
 
@@ -509,6 +519,27 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
           <div class="setting-desc">주간 합계는 [시작 요일 ~ 시작 요일 전날] 7일 단위로 계산됩니다</div>
           <div class="setting-current" id="cur-week-start"></div>
+        </div>
+
+        <div class="section-title">🏆 특전대 기간 설정</div>
+        <div class="setting-group">
+          <div class="setting-label">특전대 시작일</div>
+          <div class="setting-row">
+            <input type="date" class="setting-input" id="inp-start-date">
+            <button class="btn" onclick="saveSetting('start_date','inp-start-date','cur-start-date')">저장</button>
+            <button class="btn btn-outline" onclick="clearSetting('start_date','inp-start-date','cur-start-date')">초기화</button>
+          </div>
+          <div class="setting-current" id="cur-start-date"></div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">특전대 종료일</div>
+          <div class="setting-row">
+            <input type="date" class="setting-input" id="inp-end-date">
+            <button class="btn" onclick="saveSetting('end_date','inp-end-date','cur-end-date')">저장</button>
+            <button class="btn btn-outline" onclick="clearSetting('end_date','inp-end-date','cur-end-date')">초기화</button>
+          </div>
+          <div class="setting-desc">시작일~종료일까지의 누적이 [최종 집계] 탭에 표시됩니다</div>
+          <div class="setting-current" id="cur-end-date"></div>
         </div>
 
         <div class="section-title">🗓️ 휴무일 설정</div>
@@ -588,13 +619,19 @@ const TAB_TITLES = { stats: currentMode==='daily'?'일일 통계':'주간 통계
 function switchTab(name, el) {
   document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['stats','member','settings'].forEach(n=>{
+  ['stats','member','final','settings'].forEach(n=>{
     document.getElementById('tab-'+n).style.display = n===name?'block':'none';
   });
-  const title = name==='stats' ? (currentMode==='daily'?'일일 통계':'주간 통계') : (name==='member'?'개인 실적':'설정');
-  document.getElementById('topbar-title').textContent = title;
-  document.getElementById('mobile-title').textContent = title;
+  const titles = {
+    stats: currentMode==='daily'?'일일 통계':'주간 통계',
+    member: '개인 실적',
+    final: '최종 집계',
+    settings: '설정'
+  };
+  document.getElementById('topbar-title').textContent = titles[name];
+  document.getElementById('mobile-title').textContent = titles[name];
   if (name==='member') loadMemberList();
+  if (name==='final') loadFinal();
   if (name==='settings') loadSettings();
   if (window.innerWidth <= 900) toggleMenu();
 }
@@ -732,24 +769,89 @@ function renderReporters(reports) {
     document.getElementById('reporter-list').innerHTML = '<div class="empty-state">📭 보고 없음</div>';
     return;
   }
-  // 주간 모드는 같은 사람 합쳐서 표시
-  let display = reports;
   if (currentMode === 'weekly') {
     const map = {};
     reports.forEach(r => {
       if (!map[r.telegram_id]) map[r.telegram_id] = { name: r.name, count: 0 };
       map[r.telegram_id].count++;
     });
-    display = Object.values(map).map(v => ({ name: v.name, report_time: `${v.count}일 보고` }));
+    const display = Object.values(map);
+    document.getElementById('reporter-list').innerHTML = display.map(r=>`
+      <div class="reporter-item">
+        <div><div class="reporter-name">${r.name}</div><div class="reporter-time">${r.count}일 보고</div></div>
+        <span class="badge badge-success">✓</span>
+      </div>`).join('');
+    return;
   }
-  document.getElementById('reporter-list').innerHTML = display.map(r=>`
-    <div class="reporter-item">
+  // 일일 모드 - 클릭하면 수정/삭제 가능
+  document.getElementById('reporter-list').innerHTML = reports.map(r=>`
+    <div class="reporter-item" style="cursor:pointer" onclick="editReport(${r.id})">
       <div>
         <div class="reporter-name">${r.name}</div>
-        <div class="reporter-time">${r.report_time||'-'}</div>
+        <div class="reporter-time">${r.report_time||'-'} · 클릭하여 수정/삭제</div>
       </div>
-      <span class="badge badge-success">✓</span>
+      <span class="badge badge-primary">✏️</span>
     </div>`).join('');
+}
+
+// ── 보고 수정/삭제 ────────────────────────────────────────
+async function editReport(reportId) {
+  const r = currentRows.find(x => x.id === reportId);
+  if (!r) return;
+
+  document.getElementById('modal-title').textContent = `${r.name} 보고 수정`;
+  const body = document.getElementById('modal-body');
+
+  body.innerHTML = `
+    <div style="display:grid;gap:12px">
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">전도활동</label>
+        <input type="text" class="setting-input" id="edit-activity" value="${(r.activity||'').replace(/"/g,'&quot;')}" style="width:100%">
+      </div>
+      ${['발굴','찾기','합자','섭외인도','섭외교사','복음방인도','복음방교사'].map(k => `
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:4px;display:block">${k}</label>
+          <div style="display:grid;grid-template-columns:80px 1fr;gap:8px">
+            <input type="number" class="setting-input" id="edit-${k}건수" value="${r[k+'건수']||0}" min="0" style="text-align:center">
+            <input type="text" class="setting-input" id="edit-${k}이름" value="${(r[k+'이름']||'').replace(/"/g,'&quot;')}" placeholder="이름">
+          </div>
+        </div>
+      `).join('')}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1" onclick="saveEdit(${r.id})">💾 저장</button>
+        <button class="btn" style="background:var(--danger);flex:1" onclick="deleteReport(${r.id})">🗑️ 삭제</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+async function saveEdit(reportId) {
+  const update = {
+    activity: document.getElementById('edit-activity').value.trim() || '미기재',
+  };
+  ['발굴','찾기','합자','섭외인도','섭외교사','복음방인도','복음방교사'].forEach(k => {
+    update[k+'건수'] = parseInt(document.getElementById('edit-'+k+'건수').value) || 0;
+    update[k+'이름'] = document.getElementById('edit-'+k+'이름').value.trim();
+  });
+  const { error } = await db.from('reports').update(update).eq('id', reportId);
+  if (error) {
+    alert('저장 실패: ' + error.message);
+    return;
+  }
+  closeModal();
+  loadStats();
+}
+
+async function deleteReport(reportId) {
+  if (!confirm('정말 이 보고를 삭제하시겠습니까?')) return;
+  const { error } = await db.from('reports').delete().eq('id', reportId);
+  if (error) {
+    alert('삭제 실패: ' + error.message);
+    return;
+  }
+  closeModal();
+  loadStats();
 }
 
 function renderUnreported(reports, members) {
@@ -858,6 +960,174 @@ async function loadMember() {
     </div>`;
 }
 
+// ── 최종 집계 ─────────────────────────────────────────────
+async function loadFinal() {
+  const el = document.getElementById('final-content');
+  el.innerHTML = '<div class="loading">로딩 중...</div>';
+
+  // 시작일/종료일 조회
+  const { data: settings } = await db.from('settings').select('*');
+  const map = {};
+  (settings||[]).forEach(r => map[r.key] = r.value);
+
+  const startDate = map['start_date'];
+  const endDate = map['end_date'];
+
+  if (!startDate || !endDate) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:60px 20px">
+        ⚠️ 특전대 시작일과 종료일을 설정해주세요<br>
+        <span style="font-size:0.78rem">설정 탭 → 특전대 기간 설정</span>
+      </div>`;
+    return;
+  }
+
+  // 기간 내 보고 조회
+  const { data: reports } = await db.from('reports').select('*')
+    .gte('report_date', startDate).lte('report_date', endDate);
+  const rows = (reports || []).filter(r => r.telegram_id !== 0);
+
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state">📭 기간 내 보고 데이터 없음</div>';
+    return;
+  }
+
+  // 개인별 집계
+  const memberMap = {};
+  rows.forEach(r => {
+    const tid = r.telegram_id;
+    if (!memberMap[tid]) {
+      memberMap[tid] = {
+        name: r.name,
+        days: 0,
+        발굴건수: 0, 발굴이름: [],
+        찾기건수: 0, 찾기이름: [],
+        합자건수: 0, 합자이름: [],
+        섭외인도건수: 0, 섭외인도이름: [],
+        섭외교사건수: 0, 섭외교사이름: [],
+        복음방인도건수: 0, 복음방인도이름: [],
+        복음방교사건수: 0, 복음방교사이름: [],
+      };
+    }
+    memberMap[tid].days++;
+    ['발굴','찾기','합자','섭외인도','섭외교사','복음방인도','복음방교사'].forEach(k => {
+      memberMap[tid][k+'건수'] += (r[k+'건수'] || 0);
+      const names = (r[k+'이름']||'').split(/[,，、]/).map(n=>n.trim()).filter(Boolean);
+      memberMap[tid][k+'이름'].push(...names);
+    });
+  });
+
+  const members = Object.values(memberMap).sort((a,b) => {
+    const totalA = a.발굴건수+a.찾기건수+a.합자건수+a.섭외인도건수+a.섭외교사건수+a.복음방인도건수+a.복음방교사건수;
+    const totalB = b.발굴건수+b.찾기건수+b.합자건수+b.섭외인도건수+b.섭외교사건수+b.복음방인도건수+b.복음방교사건수;
+    return totalB - totalA;
+  });
+
+  // 전체 합계
+  const totalSum = (key) => rows.reduce((s,r) => s + (r[key]||0), 0);
+
+  let html = `
+    <div style="background:linear-gradient(135deg,#3B82F6,#8B5CF6);color:#fff;border-radius:16px;padding:20px 24px;margin-bottom:20px">
+      <div style="font-size:0.78rem;opacity:0.9;margin-bottom:4px">🏆 특전대 최종 집계</div>
+      <div style="font-size:1.1rem;font-weight:700">${startDate} ~ ${endDate}</div>
+      <div style="font-size:0.8rem;opacity:0.9;margin-top:8px">참여 인원 ${members.length}명 · 총 ${rows.length}건 보고</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent:#10B981;--accent-light:#ECFDF5">
+        <div class="stat-card-accent"></div>
+        <div class="stat-icon">🌱</div>
+        <div class="stat-label">발굴 인도 합계</div>
+        <div class="stat-value">${totalSum('발굴건수')}<span class="stat-unit">건</span></div>
+      </div>
+      <div class="stat-card" style="--accent:#6366F1;--accent-light:#EEF2FF">
+        <div class="stat-card-accent"></div>
+        <div class="stat-icon">🔍</div>
+        <div class="stat-label">찾기 인도 합계</div>
+        <div class="stat-value">${totalSum('찾기건수')}<span class="stat-unit">건</span></div>
+      </div>
+      <div class="stat-card" style="--accent:#F59E0B;--accent-light:#FFFBEB">
+        <div class="stat-card-accent"></div>
+        <div class="stat-icon">⭐</div>
+        <div class="stat-label">합자 합계</div>
+        <div class="stat-value">${totalSum('합자건수')}<span class="stat-unit">건</span></div>
+      </div>
+      <div class="stat-card" style="--accent:#F97316;--accent-light:#FFF7ED">
+        <div class="stat-card-accent"></div>
+        <div class="stat-icon">🤝</div>
+        <div class="stat-label">섭외 합계</div>
+        <div class="stat-value">${totalSum('섭외인도건수')+totalSum('섭외교사건수')}<span class="stat-unit">건</span></div>
+      </div>
+      <div class="stat-card" style="--accent:#EC4899;--accent-light:#FDF2F8">
+        <div class="stat-card-accent"></div>
+        <div class="stat-icon">🏠</div>
+        <div class="stat-label">복음방 합계</div>
+        <div class="stat-value">${totalSum('복음방인도건수')+totalSum('복음방교사건수')}<span class="stat-unit">건</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">👥 개인별 최종 집계 (실적순)</div>
+  `;
+
+  members.forEach((m, idx) => {
+    const total = m.발굴건수+m.찾기건수+m.합자건수+m.섭외인도건수+m.섭외교사건수+m.복음방인도건수+m.복음방교사건수;
+    const medal = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':`${idx+1}위`;
+    const allNames = [
+      ...(m.발굴이름.length ? [{ label:'발굴', names:m.발굴이름, color:'#10B981' }] : []),
+      ...(m.찾기이름.length ? [{ label:'찾기', names:m.찾기이름, color:'#6366F1' }] : []),
+      ...(m.합자이름.length ? [{ label:'합자', names:m.합자이름, color:'#F59E0B' }] : []),
+      ...(m.섭외인도이름.length ? [{ label:'섭외인도', names:m.섭외인도이름, color:'#F97316' }] : []),
+      ...(m.섭외교사이름.length ? [{ label:'섭외교사', names:m.섭외교사이름, color:'#EF4444' }] : []),
+      ...(m.복음방인도이름.length ? [{ label:'복음방인도', names:m.복음방인도이름, color:'#EC4899' }] : []),
+      ...(m.복음방교사이름.length ? [{ label:'복음방교사', names:m.복음방교사이름, color:'#8B5CF6' }] : []),
+    ];
+
+    html += `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:1.1rem;font-weight:700;min-width:36px">${medal}</div>
+          <div>
+            <div style="font-size:0.95rem;font-weight:700">${m.name}</div>
+            <div style="font-size:0.72rem;color:var(--text3)">${m.days}일 보고 · 총 ${total}건</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px">
+          <div style="text-align:center;padding:10px;background:#ECFDF5;border-radius:8px">
+            <div style="font-size:0.68rem;color:#10B981;font-weight:600">발굴</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#10B981">${m.발굴건수}</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#EEF2FF;border-radius:8px">
+            <div style="font-size:0.68rem;color:#6366F1;font-weight:600">찾기</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#6366F1">${m.찾기건수}</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#FFFBEB;border-radius:8px">
+            <div style="font-size:0.68rem;color:#F59E0B;font-weight:600">합자</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#F59E0B">${m.합자건수}</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#FFF7ED;border-radius:8px">
+            <div style="font-size:0.68rem;color:#F97316;font-weight:600">섭외</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#F97316">${m.섭외인도건수+m.섭외교사건수}</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:#FDF2F8;border-radius:8px">
+            <div style="font-size:0.68rem;color:#EC4899;font-weight:600">복음방</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#EC4899">${m.복음방인도건수+m.복음방교사건수}</div>
+          </div>
+        </div>
+        ${allNames.length ? '<div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin-bottom:8px">🎯 인도/섭외 명단</div>' + allNames.map(g => `
+          <div style="margin-bottom:8px">
+            <div style="font-size:0.72rem;color:${g.color};font-weight:700;margin-bottom:4px">${g.label} (${g.names.length}명)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">${g.names.map(n=>`<span class="chip chip-success" style="font-size:0.72rem">${n}</span>`).join('')}</div>
+          </div>`).join('') : ''}
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
 // ── 설정 ──────────────────────────────────────────────────
 async function loadSettings() {
   const { data } = await db.from('settings').select('*');
@@ -871,6 +1141,14 @@ async function loadSettings() {
   if (map['topic_id']) {
     document.getElementById('inp-topic-id').value = map['topic_id'];
     document.getElementById('cur-topic-id').textContent = '현재: ' + map['topic_id'];
+  }
+  if (map['start_date']) {
+    document.getElementById('inp-start-date').value = map['start_date'];
+    document.getElementById('cur-start-date').textContent = '현재: ' + map['start_date'];
+  }
+  if (map['end_date']) {
+    document.getElementById('inp-end-date').value = map['end_date'];
+    document.getElementById('cur-end-date').textContent = '현재: ' + map['end_date'];
   }
 
   const ws = map['week_start'] || '1';
