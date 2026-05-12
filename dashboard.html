@@ -802,7 +802,8 @@ async function editItem(reportId, key, label) {
       <div>
         <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;display:block">📝 인도받은 사람 이름</label>
         <input type="text" class="setting-input" id="edit-${key}이름" value="${(r[key+'이름']||'').replace(/"/g,'&quot;')}" placeholder="예: 홍길동, 김철수" style="width:100%">
-        <div style="font-size:0.7rem;color:var(--text3);margin-top:4px">여러 명은 쉼표(,)로 구분</div>
+        <div style="font-size:0.7rem;color:var(--text3);margin-top:4px">여러 명은 쉼표(,)로 구분 · 아래에서 클릭하면 추가됩니다</div>
+        <div id="member-chips-${key}" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px"></div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -811,6 +812,32 @@ async function editItem(reportId, key, label) {
       </div>
     </div>
   `;
+  // 모달이 표시된 후 구성원 칩 렌더링
+  renderMemberChips(key, members);
+}
+
+// 구성원 칩 렌더링 (editItem 모달용)
+function renderMemberChips(key, members) {
+  const wrap = document.getElementById('member-chips-' + key);
+  if (!wrap) return;
+  wrap.innerHTML = (members || []).map(m =>
+    `<span style="cursor:pointer;font-size:0.75rem;padding:4px 10px;background:#EFF6FF;color:#3B82F6;border:1px solid #BFDBFE;border-radius:20px" onclick="addNameToInput('${key}', '${m.name.replace(/'/g, "\\'")}')">+ ${m.name}</span>`
+  ).join('');
+}
+
+// 칩 클릭 시 입력란에 이름 추가
+function addNameToInput(key, name) {
+  const input = document.getElementById('edit-' + key + '이름');
+  if (!input) return;
+  const current = input.value.trim();
+  const names = current ? current.split(/[,，、]/).map(n => n.trim()).filter(Boolean) : [];
+  if (names.includes(name)) return;  // 중복 방지
+  names.push(name);
+  input.value = names.join(', ');
+
+  // 건수도 자동 +1
+  const countInput = document.getElementById('edit-' + key + '건수');
+  if (countInput) countInput.value = names.length;
 }
 
 async function saveItemEdit(reportId, key) {
@@ -1055,11 +1082,17 @@ async function loadMember() {
     </div>`).join('');
 
   document.getElementById('member-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-      <div style="width:40px;height:40px;background:var(--primary-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">👤</div>
-      <div>
-        <div style="font-size:1rem;font-weight:700">${reports[0].name}</div>
-        <div style="font-size:0.75rem;color:var(--text3)">총 ${reports.length}일 보고</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;background:var(--primary-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">👤</div>
+        <div>
+          <div style="font-size:1rem;font-weight:700">${reports[0].name}</div>
+          <div style="font-size:0.75rem;color:var(--text3)">총 ${reports.length}일 보고</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline" onclick="editMemberName('${tid}','${reports[0].name.replace(/'/g,"\\'")}')">✏️ 이름 수정</button>
+        <button class="btn" style="background:var(--danger)" onclick="deleteMember('${tid}','${reports[0].name.replace(/'/g,"\\'")}')">🗑️ 구성원 삭제</button>
       </div>
     </div>
     <div class="two-col">
@@ -1070,6 +1103,39 @@ async function loadMember() {
       <div class="card-header"><div class="card-title">📋 최근 보고 이력</div></div>
       <div class="card-body">${recent}</div>
     </div>`;
+}
+
+// ── 보고자 이름 수정 / 구성원 삭제 ────────────────────────
+async function editMemberName(tid, currentName) {
+  const newName = prompt('새 이름을 입력하세요', currentName);
+  if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
+  const name = newName.trim();
+
+  // members 테이블 업데이트
+  const { error: e1 } = await db.from('members').update({ name }).eq('telegram_id', tid);
+  if (e1) { alert('이름 변경 실패: ' + e1.message); return; }
+
+  // reports 테이블의 모든 본인 보고 이름도 업데이트
+  const { error: e2 } = await db.from('reports').update({ name }).eq('telegram_id', tid);
+  if (e2) { alert('보고 이력 이름 업데이트 실패: ' + e2.message); return; }
+
+  alert('✅ 이름이 변경되었습니다!');
+  await loadMemberList();
+  document.getElementById('member-select').value = tid;
+  loadMember();
+}
+
+async function deleteMember(tid, name) {
+  if (!confirm(`정말 "${name}" 구성원을 삭제하시겠습니까?\n\n해당 구성원의 모든 보고도 함께 삭제됩니다.`)) return;
+
+  // reports 먼저 삭제
+  await db.from('reports').delete().eq('telegram_id', tid);
+  // members 삭제
+  await db.from('members').delete().eq('telegram_id', tid);
+
+  alert('✅ 삭제되었습니다');
+  await loadMemberList();
+  document.getElementById('member-content').innerHTML = '<div class="empty-state">👆 구성원을 선택해주세요</div>';
 }
 
 // ── 최종 집계 ─────────────────────────────────────────────
