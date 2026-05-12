@@ -442,7 +442,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
             <div class="mode-tab active" id="mode-daily" onclick="setMode('daily')">일일</div>
             <div class="mode-tab" id="mode-weekly" onclick="setMode('weekly')">주간</div>
           </div>
-          <input type="date" class="date-input" id="date-picker">
+          <input type="date" class="date-input" id="date-picker" onchange="loadStats()">
           <button class="btn" onclick="loadStats()">조회</button>
         </div>
 
@@ -733,8 +733,8 @@ function showDetail(key, label) {
 
   if (key === 'total') {
     const html = currentRows.map(r => `
-      <div class="detail-item">
-        <div class="detail-name">${r.name}</div>
+      <div class="detail-item" style="cursor:pointer" onclick="editReport(${r.id})">
+        <div class="detail-name">${r.name} <span style="font-size:0.72rem;color:var(--primary)">✏️ 수정</span></div>
         <div class="detail-targets">
           ${r.report_date} ${r.report_time||''} ·
           발굴 ${r.발굴건수||0} / 찾기 ${r.찾기건수||0} / 합자 ${r.합자건수||0} /
@@ -751,15 +751,127 @@ function showDetail(key, label) {
     } else {
       const html = items.map(r => {
         const names = (r[nameKey]||'').trim() || '(이름 미기재)';
-        return `<div class="detail-item">
-          <div class="detail-name">${r.name} <span style="color:var(--text3);font-weight:400;font-size:0.8rem">· ${r.report_date}</span></div>
-          <div class="detail-targets"><b>${r[countKey]}건</b> · ${names}</div>
+        return `<div class="detail-item" style="cursor:pointer" onclick="editItem(${r.id}, '${key}', '${label}')">
+          <div class="detail-name">
+            <span style="font-size:0.78rem;color:var(--text3)">인도자</span> ${r.name}
+            <span style="font-size:0.72rem;color:var(--primary);margin-left:6px">✏️ 수정</span>
+            <span style="color:var(--text3);font-weight:400;font-size:0.78rem;float:right">${r.report_date}</span>
+          </div>
+          <div class="detail-targets" style="margin-top:4px">
+            <span style="font-size:0.78rem;color:var(--text3)">${label}</span>
+            <b style="margin-left:6px">${r[countKey]}건</b> · ${names}
+          </div>
         </div>`;
       }).join('');
       body.innerHTML = html;
     }
   }
   modal.classList.add('show');
+}
+
+// 항목별 빠른 수정 (인도자 변경 + 인도받은 사람 이름 변경)
+async function editItem(reportId, key, label) {
+  const r = currentRows.find(x => x.id === reportId);
+  if (!r) return;
+
+  // 모든 구성원 조회
+  const { data: members } = await db.from('members').select('telegram_id, name').eq('active', true);
+  const memberOptions = (members||[]).map(m =>
+    `<option value="${m.telegram_id}|${m.name}" ${String(m.telegram_id)===String(r.telegram_id)?'selected':''}>${m.name}</option>`
+  ).join('');
+
+  document.getElementById('modal-title').textContent = `${label} 수정`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;gap:14px">
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;display:block">📅 보고 날짜</label>
+        <div style="font-size:0.85rem;color:var(--text2)">${r.report_date} ${r.report_time||''}</div>
+      </div>
+
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;display:block">👤 인도자 변경</label>
+        <select class="setting-input" id="edit-reporter" style="width:100%">${memberOptions}</select>
+        <div style="font-size:0.7rem;color:var(--text3);margin-top:4px">다른 보고자로 이전합니다</div>
+      </div>
+
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;display:block">🎯 ${label} 건수</label>
+        <input type="number" class="setting-input" id="edit-${key}건수" value="${r[key+'건수']||0}" min="0" style="width:100%;text-align:center">
+      </div>
+
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;display:block">📝 인도받은 사람 이름</label>
+        <input type="text" class="setting-input" id="edit-${key}이름" value="${(r[key+'이름']||'').replace(/"/g,'&quot;')}" placeholder="예: 홍길동, 김철수" style="width:100%">
+        <div style="font-size:0.7rem;color:var(--text3);margin-top:4px">여러 명은 쉼표(,)로 구분</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1" onclick="saveItemEdit(${r.id}, '${key}')">💾 저장</button>
+        <button class="btn btn-outline" style="flex:1" onclick="editReport(${r.id})">전체 수정</button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveItemEdit(reportId, key) {
+  const reporterVal = document.getElementById('edit-reporter').value;
+  const [newTid, newName] = reporterVal.split('|');
+  const newCount = parseInt(document.getElementById('edit-'+key+'건수').value) || 0;
+  const newNamesText = document.getElementById('edit-'+key+'이름').value.trim();
+
+  const r = currentRows.find(x => x.id === reportId);
+  if (!r) return;
+
+  // 인도자가 바뀐 경우
+  if (String(newTid) !== String(r.telegram_id)) {
+    // 1. 새 인도자의 같은 날짜 보고가 있는지 확인
+    const { data: existing } = await db.from('reports').select('*')
+      .eq('telegram_id', newTid).eq('report_date', r.report_date).maybeSingle();
+
+    if (existing) {
+      // 기존 보고에 합산
+      const update = {
+        [key+'건수']: (existing[key+'건수']||0) + newCount,
+        [key+'이름']: [(existing[key+'이름']||'').trim(), newNamesText].filter(Boolean).join(', ')
+      };
+      await db.from('reports').update(update).eq('id', existing.id);
+    } else {
+      // 새 인도자의 보고 새로 생성
+      const newReport = {
+        telegram_id: newTid,
+        name: newName,
+        report_date: r.report_date,
+        report_time: r.report_time,
+        activity: '이관됨',
+        발굴건수:0, 발굴이름:'',
+        찾기건수:0, 찾기이름:'',
+        합자건수:0, 합자이름:'',
+        섭외인도건수:0, 섭외인도이름:'',
+        섭외교사건수:0, 섭외교사이름:'',
+        복음방인도건수:0, 복음방인도이름:'',
+        복음방교사건수:0, 복음방교사이름:'',
+      };
+      newReport[key+'건수'] = newCount;
+      newReport[key+'이름'] = newNamesText;
+      await db.from('reports').insert(newReport);
+    }
+
+    // 원래 보고에서는 이 항목 제거
+    await db.from('reports').update({
+      [key+'건수']: 0,
+      [key+'이름']: ''
+    }).eq('id', reportId);
+
+  } else {
+    // 같은 인도자 - 항목만 수정
+    await db.from('reports').update({
+      [key+'건수']: newCount,
+      [key+'이름']: newNamesText
+    }).eq('id', reportId);
+  }
+
+  closeModal();
+  loadStats();
 }
 
 function closeModal() { document.getElementById('detail-modal').classList.remove('show'); }
