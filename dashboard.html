@@ -816,6 +816,26 @@ async function editItem(reportId, key, label) {
   renderMemberChips(key, members);
 }
 
+// 개인 실적 탭에서 보고 수정용 헬퍼
+async function loadCurrentRowsThenEdit(reportId, key, label) {
+  const { data: report } = await db.from('reports').select('*').eq('id', reportId).single();
+  if (!report) { alert('보고를 찾을 수 없습니다'); return; }
+  // 임시로 currentRows에 추가
+  if (!currentRows.find(r => r.id === reportId)) {
+    currentRows.push(report);
+  }
+  editItem(reportId, key, label);
+}
+
+async function loadCurrentRowsThenFullEdit(reportId) {
+  const { data: report } = await db.from('reports').select('*').eq('id', reportId).single();
+  if (!report) { alert('보고를 찾을 수 없습니다'); return; }
+  if (!currentRows.find(r => r.id === reportId)) {
+    currentRows.push(report);
+  }
+  editReport(reportId);
+}
+
 // 구성원 칩 렌더링 (editItem 모달용)
 function renderMemberChips(key, members) {
   const wrap = document.getElementById('member-chips-' + key);
@@ -1058,24 +1078,24 @@ async function loadMember() {
 
   // 인도/섭외자 명단
   const allTargets = ITEMS.map(i => {
-    const names = [];
+    const entries = [];
     reports.forEach(r => {
       const ns = (r[i.key+'이름']||'').split(/[,，、]/).map(n=>n.trim()).filter(Boolean);
-      ns.forEach(n => names.push({ name: n, date: r.report_date }));
+      ns.forEach(n => entries.push({ name: n, reportId: r.id, date: r.report_date }));
     });
-    if (!names.length) return '';
+    if (!entries.length) return '';
     return `<div style="margin-bottom:14px">
-      <div style="font-size:0.78rem;font-weight:700;color:${i.color};margin-bottom:6px">${i.label} (${names.length}명)</div>
+      <div style="font-size:0.78rem;font-weight:700;color:${i.color};margin-bottom:6px">${i.label} (${entries.length}명)</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${names.map(n=>`<span class="chip chip-success" style="font-size:0.75rem">${n.name}</span>`).join('')}
+        ${entries.map(e=>`<span class="chip chip-success" style="font-size:0.75rem;cursor:pointer" onclick="loadCurrentRowsThenEdit(${e.reportId}, '${i.key}', '${i.label.replace(/'/g,"\\'")}')">${e.name} <span style="opacity:0.6;font-size:0.65rem">${e.date.slice(5)}</span> ✏️</span>`).join('')}
       </div>
     </div>`;
   }).filter(Boolean).join('');
 
   const recent = reports.slice(0,10).map(r=>`
-    <div class="reporter-item">
+    <div class="reporter-item" style="cursor:pointer" onclick="loadCurrentRowsThenFullEdit(${r.id})">
       <div>
-        <div class="reporter-name" style="font-size:0.85rem">${r.report_date}</div>
+        <div class="reporter-name" style="font-size:0.85rem">${r.report_date} <span style="font-size:0.7rem;color:var(--primary)">✏️ 수정</span></div>
         <div class="reporter-time">발굴${r.발굴건수||0}/찾기${r.찾기건수||0}/합자${r.합자건수||0}/섭외${r.섭외인도건수||0}/복음방${r.복음방인도건수||0}</div>
       </div>
       <span class="badge badge-primary">${r.report_time||'-'}</span>
